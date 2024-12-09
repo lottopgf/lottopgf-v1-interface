@@ -2,29 +2,80 @@ import { Box, Button, Card, Grid, Heading, HStack, Input, VStack } from '@chakra
 import { Field } from '../components/ui/field'
 import { Slider } from '../components/ui/slider'
 import { StepperInput } from '../components/ui/stepper-input'
+import { useCallback, useState } from 'react'
+import z from 'zod'
+
+const NumericSchema = z.string().regex(/^\d+$/).transform(Number)
 
 export function Deploy() {
+    const [title, setTitle] = useState('')
+    const [symbol, setSymbol] = useState('')
+    const [duration, _setDuration] = useState(3600)
+    const [communityFeeBps, setCommunityFeeBps] = useState(50)
+    const [prizeTokenAddress, setPrizeTokenAddress] = useState('')
+    const [pickLength, setPickLength] = useState(5)
+    const [maxBallValue, setMaxBallValue] = useState(25)
+    const [ticketPrice, setTicketPrice] = useState('')
+
+    const setDuration = useCallback(
+        (value: string) => {
+            // const { success, data } = NumericSchema.safeParse(value)
+        },
+        [_setDuration],
+    )
+
     return (
         <>
             <VStack alignItems="flex-start">
                 <Box width="md">
-                    <Heading size="3xl" fontWeight="normal" textAlign="left" mt={8}>
+                    <Heading size="3xl" fontWeight="normal" textAlign="left" mt={16}>
                         Launch a permissionless lottery to fund public goods
                     </Heading>
                 </Box>
 
+                {/** Lottery details */}
+                <VStack width="md" alignItems="flex-start" mt={16}>
+                    <Heading size="lg">Lottery details</Heading>
+
+                    <Field label="Lottery title" mt={4}>
+                        <Input
+                            placeholder="The biggest lottery ever"
+                            variant="outline"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                        />
+                    </Field>
+
+                    <Field
+                        label="Lottery symbol"
+                        mt={8}
+                        helperText="The symbol of the lottery, used for NFT tickets"
+                    >
+                        <Input
+                            placeholder="PWRBLD"
+                            variant="outline"
+                            value={symbol}
+                            onChange={(e) => setSymbol(e.target.value)}
+                        />
+                    </Field>
+                </VStack>
+
                 {/** Lottery settings */}
-                <VStack width="md" alignItems="flex-start">
-                    <Heading size="lg" mt={8}>
-                        Lottery settings
-                    </Heading>
+                <VStack width="md" alignItems="flex-start" mt={16}>
+                    <Heading size="lg">Lottery settings</Heading>
 
                     <Field
                         label="Duration until draw, in seconds"
                         mt={4}
                         helperText="Minimum 10 minutes"
                     >
-                        <Input type="number" placeholder="3600" variant="outline" />
+                        <Input
+                            type="number"
+                            placeholder="3600"
+                            variant="outline"
+                            value={duration}
+                            onChange={(e) => setDuration(e.target.value)}
+                        />
                     </Field>
 
                     <Field
@@ -57,10 +108,8 @@ export function Deploy() {
                 </VStack>
 
                 {/** Ticket configuration */}
-                <VStack width="md" alignItems="flex-start">
-                    <Heading size="lg" mt={8}>
-                        Ticket configuration
-                    </Heading>
+                <VStack width="md" alignItems="flex-start" mt={16}>
+                    <Heading size="lg">Ticket configuration</Heading>
 
                     <HStack justifyContent="space-between" width="100%">
                         <Field
@@ -90,10 +139,8 @@ export function Deploy() {
                 </VStack>
 
                 {/** Beneficiaries */}
-                <VStack width="2xl" alignItems="flex-start">
-                    <Heading size="lg" mt={8}>
-                        Add causes to fund with the lottery
-                    </Heading>
+                <VStack width="2xl" alignItems="flex-start" mt={16}>
+                    <Heading size="lg">Add causes to fund with the lottery</Heading>
 
                     <Card.Root width="100%">
                         <Card.Body gap={1}>
@@ -148,8 +195,14 @@ export function Deploy() {
                         </Card.Root>
                     </Grid>
                 </VStack>
+
+                <Box width="md">
+                    <Heading size="3xl" fontWeight="normal" textAlign="left" mt={16}>
+                        Let{`'`}s fund public goods 🫡
+                    </Heading>
+                </Box>
                 <Button variant="solid" colorPalette="green" size="xl" mt={4}>
-                    Deploy
+                    Launch
                 </Button>
             </VStack>
         </>
