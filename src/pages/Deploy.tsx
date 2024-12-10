@@ -1,28 +1,118 @@
-import { Box, Button, Card, Grid, Heading, HStack, Input, VStack } from '@chakra-ui/react'
+import { Box, Heading, HStack, Input, Link, Text, VStack } from '@chakra-ui/react'
+import { Button } from '../components/ui/button'
 import { Field } from '../components/ui/field'
 import { Slider } from '../components/ui/slider'
 import { StepperInput } from '../components/ui/stepper-input'
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import z from 'zod'
+import debounce from 'lodash.debounce'
+import { formatUnits, getAddress, isAddress } from 'viem'
+import { useERC20 } from '../hooks/useERC20'
+import { useCreateLootery } from '../hooks/useCreateLootery'
+import { useChainId, useChains } from 'wagmi'
+import { chains } from '../components/WalletProvider'
 
 const NumericSchema = z.string().regex(/^\d+$/).transform(Number)
+const BigIntSchema = z.string().regex(/^\d+$/).transform(BigInt)
 
 export function Deploy() {
     const [title, setTitle] = useState('')
     const [symbol, setSymbol] = useState('')
     const [duration, _setDuration] = useState(3600)
-    const [communityFeeBps, setCommunityFeeBps] = useState(50)
+    const [communityFeeBps, _setCommunityFeeBps] = useState(50)
     const [prizeTokenAddress, setPrizeTokenAddress] = useState('')
     const [pickLength, setPickLength] = useState(5)
     const [maxBallValue, setMaxBallValue] = useState(25)
-    const [ticketPrice, setTicketPrice] = useState('')
+    const [ticketPrice, _setTicketPrice] = useState(10n ** 18n)
+    // const [beneficiaries, setBeneficiaries] = useState([] as string[])
+    const [seedJackpotDelay, setSeedJackpotDelay] = useState(600n)
+    const [seedJackpotMinValue, setSeedJackpotMinValue] = useState(10n ** 18n)
 
     const setDuration = useCallback(
-        (value: string) => {
-            // const { success, data } = NumericSchema.safeParse(value)
-        },
+        debounce((value: string) => {
+            const { success, data } = NumericSchema.safeParse(value)
+            if (success) {
+                _setDuration(data)
+            }
+        }),
         [_setDuration],
     )
+
+    const setCommunityFeeBps = useCallback(
+        debounce((value: number) => {
+            const bps = value * 100
+            _setCommunityFeeBps(bps)
+        }),
+        [_setCommunityFeeBps],
+    )
+
+    const isValidTokenAddress = useMemo(() => {
+        try {
+            const maybeAddress = getAddress(prizeTokenAddress)
+            return isAddress(maybeAddress)
+        } catch (err) {
+            return false
+        }
+    }, [prizeTokenAddress])
+
+    const {
+        name: prizeTokenName,
+        symbol: prizeTokenSymbol,
+        decimals: prizeTokenDecimals,
+    } = useERC20(prizeTokenAddress as `0x${string}`)
+
+    const setTicketPrice = useCallback(
+        debounce((value: string) => {
+            const { success, data } = BigIntSchema.safeParse(value)
+            if (success) {
+                _setTicketPrice(data)
+            }
+        }),
+        [_setTicketPrice],
+    )
+
+    // Ephemeral state for adding beneficiaries
+    // const [isAddingBeneficiary, setIsAddingBeneficiary] = useState(false)
+    // const [newBeneficiaryName, setNewBeneficiaryName] = useState('')
+
+    const {
+        write: createLootery,
+        status: createLooteryStatus,
+        looteryLaunchedEvent,
+    } = useCreateLootery()
+    const launch = useCallback(async () => {
+        if (!createLootery) {
+            return
+        }
+
+        await createLootery(
+            title,
+            symbol,
+            pickLength,
+            maxBallValue,
+            BigInt(duration),
+            ticketPrice,
+            BigInt(communityFeeBps),
+            prizeTokenAddress as `0x${string}`,
+            BigInt(seedJackpotDelay),
+            BigInt(seedJackpotMinValue),
+        )
+    }, [
+        createLootery,
+        title,
+        symbol,
+        pickLength,
+        maxBallValue,
+        duration,
+        ticketPrice,
+        communityFeeBps,
+        prizeTokenAddress,
+        seedJackpotDelay,
+        seedJackpotMinValue,
+    ])
+
+    const chainId = useChainId()
+    const chain = chains.find((c) => c.id === chainId)
 
     return (
         <>
@@ -82,27 +172,65 @@ export function Deploy() {
                         label="Community fee, in %"
                         mt={8}
                         helperText="Percentage of ticket price that goes to the community"
+                        errorText={'Maximum community fee is 95% (5% reserved for protocol)'}
+                        invalid={communityFeeBps > 9500}
                     >
-                        <Slider
-                            width="100%"
-                            defaultValue={[50]}
-                            size="md"
-                            marks={[
-                                { value: 0, label: '0%' },
-                                { value: 50, label: '50%' },
-                                { value: 100, label: '100%' },
-                            ]}
-                        />
+                        <HStack width="100%" gap={4}>
+                            <Slider
+                                width="100%"
+                                size="md"
+                                value={[Math.floor(communityFeeBps / 100)]}
+                                onValueChange={(details) => setCommunityFeeBps(details.value[0])}
+                            />
+                            <Box>{`${Math.floor(communityFeeBps / 100)}%`}</Box>
+                        </HStack>
                     </Field>
 
                     <Field
                         label="Prize token contract address"
                         mt={8}
                         helperText="The token that will be used as prize payout and ticket purchases"
+                        errorText="Invalid token address"
+                        invalid={!isValidTokenAddress}
                     >
                         <Input
                             placeholder="0x4200000000000000000000000000000000000006"
+                            value={prizeTokenAddress}
+                            onChange={(e) => setPrizeTokenAddress(e.target.value)}
                             variant="outline"
+                        />
+                        {prizeTokenName && prizeTokenSymbol && (
+                            <Text fontSize="sm">
+                                {prizeTokenName} ({prizeTokenSymbol})
+                            </Text>
+                        )}
+                    </Field>
+
+                    <Field
+                        label="Seed jackpot delay, in seconds"
+                        mt={8}
+                        helperText="Rate-limiter for manual jackpot seeding"
+                    >
+                        <Input
+                            type="number"
+                            placeholder="600"
+                            variant="outline"
+                            value={seedJackpotDelay.toString()}
+                            onChange={(e) => setSeedJackpotDelay(BigInt(e.target.value))}
+                        />
+                    </Field>
+
+                    <Field
+                        label="Seed jackpot minimum value, in the prize token's decimals"
+                        mt={8}
+                        helperText="Minimum value for manual jackpot seeding"
+                    >
+                        <Input
+                            type="number"
+                            placeholder="1000000000000000000"
+                            variant="outline"
+                            value={seedJackpotMinValue.toString()}
+                            onChange={(e) => setSeedJackpotMinValue(BigInt(e.target.value))}
                         />
                     </Field>
                 </VStack>
@@ -117,7 +245,10 @@ export function Deploy() {
                             mt={8}
                             helperText="Select the highest number that can be picked (the lowest number is always 1)"
                         />
-                        <StepperInput defaultValue="25" />
+                        <StepperInput
+                            value={maxBallValue.toString()}
+                            onValueChange={(details) => setMaxBallValue(details.valueAsNumber)}
+                        />
                     </HStack>
 
                     <HStack justifyContent="space-between" width="100%">
@@ -126,7 +257,10 @@ export function Deploy() {
                             mt={8}
                             helperText="How many numbers to be picked per ticket"
                         />
-                        <StepperInput defaultValue="5" />
+                        <StepperInput
+                            value={pickLength.toString()}
+                            onValueChange={(details) => setPickLength(details.valueAsNumber)}
+                        />
                     </HStack>
 
                     <Field
@@ -134,12 +268,23 @@ export function Deploy() {
                         mt={8}
                         helperText="The price of a ticket, in the prize token's decimals"
                     >
-                        <Input type="text" placeholder="1000000000000000000" variant="outline" />
+                        <Input
+                            type="text"
+                            placeholder="1000000000000000000"
+                            variant="outline"
+                            value={ticketPrice.toString()}
+                            onChange={(event) => setTicketPrice(event.target.value)}
+                        />
+                        {prizeTokenDecimals && prizeTokenSymbol && (
+                            <Text fontSize="sm" width="40%">
+                                {formatUnits(ticketPrice, prizeTokenDecimals)} {prizeTokenSymbol}
+                            </Text>
+                        )}
                     </Field>
                 </VStack>
 
                 {/** Beneficiaries */}
-                <VStack width="2xl" alignItems="flex-start" mt={16}>
+                {/* <VStack width="2xl" alignItems="flex-start" mt={16}>
                     <Heading size="lg">Add causes to fund with the lottery</Heading>
 
                     <Card.Root width="100%">
@@ -160,50 +305,112 @@ export function Deploy() {
                             >
                                 Main cause
                             </Box>
-                            <Card.Title>ZuVillage Collective Fund</Card.Title>
+                            <Card.Title>{title || 'Main fund'}</Card.Title>
                             <Card.Description>
                                 This is the default beneficiary and the proceeds will be stored in
                                 the deployed lottery contract.
                             </Card.Description>
                         </Card.Body>
-                    </Card.Root>
+                    </Card.Root> */}
 
-                    {/** Add cause form */}
-                    <Grid templateColumns="repeat(2, 1fr)" mt={2} gap={4} width="100%">
+                {/** Other beneficiaries */}
+                {/* <Grid templateColumns="repeat(2, 1fr)" mt={2} gap={4} width="100%">
+                        {beneficiaries.map((beneficiary) => (
+                            <Card.Root width="100%">
+                                <Card.Body gap={1}>
+                                    <Card.Title>{beneficiary}</Card.Title>
+                                    <Card.Description>
+                                        {beneficiary} will receive{' '}
+                                        {Math.floor(communityFeeBps / 100)}% of the proceeds if
+                                        selected by the ticket purchaser.
+                                    </Card.Description>
+                                </Card.Body>
+                            </Card.Root>
+                        ))}
                         <Card.Root width="100%">
                             <Card.Body gap={1}>
-                                <Card.Title>ZuVillage Collective Fund</Card.Title>
-                            </Card.Body>
-                        </Card.Root>
-                        <Card.Root width="100%">
-                            <Card.Body gap={1}>
-                                <Card.Title>+ Add another cause</Card.Title>
-                                <Card.Description>
-                                    <Field label="Cause title" mt={4}>
-                                        <Input placeholder="Meowfund" variant="outline" />
-                                    </Field>
+                                {!isAddingBeneficiary && (
                                     <Button
-                                        variant="outline"
-                                        colorPalette="green"
-                                        mt={4}
+                                        variant="ghost"
                                         width="100%"
+                                        onClick={() => setIsAddingBeneficiary(true)}
                                     >
-                                        Confirm
+                                        + Add another cause
                                     </Button>
-                                </Card.Description>
+                                )}
+                                {isAddingBeneficiary && (
+                                    <Card.Description>
+                                        <Field label="Cause title">
+                                            <Input
+                                                placeholder="Meowfund"
+                                                variant="outline"
+                                                value={newBeneficiaryName}
+                                                onChange={(event) =>
+                                                    setNewBeneficiaryName(event.target.value)
+                                                }
+                                            />
+                                        </Field>
+                                        <Button
+                                            variant="outline"
+                                            colorPalette="green"
+                                            mt={4}
+                                            width="100%"
+                                            disabled={
+                                                !newBeneficiaryName ||
+                                                Boolean(
+                                                    beneficiaries.find(
+                                                        (b) => b === newBeneficiaryName,
+                                                    ),
+                                                )
+                                            }
+                                            onClick={() => {
+                                                setBeneficiaries([
+                                                    ...beneficiaries,
+                                                    newBeneficiaryName,
+                                                ])
+                                                setNewBeneficiaryName('')
+                                                setIsAddingBeneficiary(false)
+                                            }}
+                                        >
+                                            Confirm
+                                        </Button>
+                                    </Card.Description>
+                                )}
                             </Card.Body>
                         </Card.Root>
                     </Grid>
-                </VStack>
+                </VStack> */}
 
                 <Box width="md">
                     <Heading size="3xl" fontWeight="normal" textAlign="left" mt={16}>
                         Let{`'`}s fund public goods 🫡
                     </Heading>
                 </Box>
-                <Button variant="solid" colorPalette="green" size="xl" mt={4}>
+                <Button
+                    variant="solid"
+                    colorPalette="green"
+                    size="xl"
+                    mt={4}
+                    onClick={launch}
+                    disabled={createLooteryStatus === 'success'}
+                    loading={createLooteryStatus === 'pending'}
+                >
                     Launch
                 </Button>
+                {chain && looteryLaunchedEvent && (
+                    <Text fontSize="lg" mt={4}>
+                        Lottery deployed at{' '}
+                        <Link
+                            variant="underline"
+                            href={`${new URL(`/address/${looteryLaunchedEvent.args.looteryProxy}`, chain.blockExplorers.default.url)}`}
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            {looteryLaunchedEvent.args.looteryProxy}
+                        </Link>{' '}
+                        🙌
+                    </Text>
+                )}
             </VStack>
         </>
     )
