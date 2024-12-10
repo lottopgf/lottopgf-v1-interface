@@ -9,7 +9,7 @@ import debounce from 'lodash.debounce'
 import { formatUnits, getAddress, isAddress } from 'viem'
 import { useERC20 } from '../hooks/useERC20'
 import { useCreateLootery } from '../hooks/useCreateLootery'
-import { useChainId, useChains } from 'wagmi'
+import { useChainId } from 'wagmi'
 import { chains } from '../components/WalletProvider'
 
 const NumericSchema = z.string().regex(/^\d+$/).transform(Number)

@@ -1,5 +1,5 @@
 import { base, scroll } from 'viem/chains'
-import { useChainId, useWriteContract } from 'wagmi'
+import { useChainId } from 'wagmi'
 import LooteryFactoryABI from '../abis/LooteryFactory'
 
 /** LottoPGF v1 deployed factory proxies */
