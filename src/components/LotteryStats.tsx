@@ -8,7 +8,7 @@ import { FUNDRAISE_TARGET, PRIZE_TOKEN_DECIMALS, PRIZE_TOKEN_TICKER } from '@/co
 import { useCurrentGame } from '@/hooks/useCurrentGame'
 import { useGameData } from '@/hooks/useGameData'
 import { useTickets } from '@/hooks/useTickets'
-import Link from 'next/link'
+import { Address } from 'viem'
 import type { ReactNode } from 'react'
 import Countdown, { type CountdownRendererFn } from 'react-countdown'
 import { useAccount } from 'wagmi'
@@ -16,9 +16,9 @@ import { useAccount } from 'wagmi'
 const STATS_REFRESH_INTERVAL = 5000
 const SHOW_FUNDS_RAISED = false
 
-export function LotteryStats() {
+export function LotteryStats({ contractAddress }: { contractAddress: Address }) {
     const { address } = useAccount()
-    const { gameId } = useCurrentGame()
+    const { gameId } = useCurrentGame(contractAddress)
     const { jackpot, ticketsSold, roundEndTime, accruedCommunityFees } = useGameData({
         gameId,
         refetchInterval: STATS_REFRESH_INTERVAL,
@@ -136,9 +136,9 @@ export function LotteryStats() {
                         <CardDescription>Your tickets</CardDescription>
                         <CardTitle className="flex items-end justify-between">
                             <DetailsCardTitle>{numberOfTickets}</DetailsCardTitle>{' '}
-                            <Link href="/tickets" className="text-base text-green-500">
+                            <a href="/tickets" className="text-base text-green-500">
                                 View your tickets &gt;
-                            </Link>
+                            </a>
                         </CardTitle>
                     </CardHeader>
                 </Card>

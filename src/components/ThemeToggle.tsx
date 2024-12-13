@@ -8,7 +8,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Moon, Sun } from 'lucide-react'
-import { useTheme } from 'next-themes'
+import { useTheme } from './ThemeProvider.tsx'
 
 export function ThemeToggle() {
     const { setTheme } = useTheme()

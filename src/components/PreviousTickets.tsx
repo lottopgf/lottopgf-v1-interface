@@ -14,9 +14,10 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useCurrentGame } from '@/hooks/useCurrentGame'
 import { Suspense, useEffect, useState } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
+import { Address } from 'viem'
 
-export function PreviousTickets() {
-    const { gameId: currentGameId } = useCurrentGame()
+export function PreviousTickets({ contractAddress }: { contractAddress: Address }) {
+    const { gameId: currentGameId } = useCurrentGame(contractAddress)
     const [gameId, setGameId] = useState(currentGameId - 1n)
 
     useEffect(() => {
@@ -67,7 +68,7 @@ export function PreviousTickets() {
             </Card>
             <ErrorBoundary fallback={<p>Error</p>}>
                 <Suspense fallback={<TicketsSkeleton />}>
-                    <Tickets gameId={gameId} />
+                    <Tickets contractAddress={contractAddress} gameId={gameId} />
                 </Suspense>
             </ErrorBoundary>
         </div>

@@ -2,7 +2,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { useWinner } from '@/hooks/useWinner'
 import { PartyPopperIcon } from 'lucide-react'
-import Link from 'next/link'
 import ConfettiExplosion from 'react-confetti-explosion'
 import { withErrorBoundary } from 'react-error-boundary'
 import { isAddressEqual } from 'viem'
@@ -29,7 +28,7 @@ function WinnerAlertComponent({ gameId }: { gameId: bigint }) {
                             </AlertDescription>
                         </div>
                         <Button asChild>
-                            <Link href="/tickets">Check your tickets</Link>
+                            <a href="/tickets">Check your tickets</a>
                         </Button>
                     </div>
                 </Alert>
@@ -64,7 +63,7 @@ function WinnerAlertComponent({ gameId }: { gameId: bigint }) {
                         </AlertDescription>
                     </div>
                     <Button asChild>
-                        <Link href="/tickets">Check your tickets</Link>
+                        <a href="/tickets">Check your tickets</a>
                     </Button>
                 </div>
             </Alert>

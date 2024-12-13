@@ -12,8 +12,8 @@ import { toast } from 'sonner'
 import type { Address } from 'viem'
 import { useAccount } from 'wagmi'
 
-export function Tickets({ gameId }: { gameId: bigint }) {
-    const { gameId: currentGameId } = useCurrentGame()
+export function Tickets({ contractAddress, gameId }: { contractAddress: Address; gameId: bigint }) {
+    const { gameId: currentGameId } = useCurrentGame(contractAddress)
     const { address } = useAccount()
     const { tickets, hasWon, refetch } = useTicketsWithClaimStatus({
         address,

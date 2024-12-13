@@ -1,6 +1,6 @@
 import { LOOTERY_ABI } from '@/abi/Lootery'
-import { CONTRACT_ADDRESS } from '@/config'
 import { useSuspenseQuery } from '@tanstack/react-query'
+import { Address } from 'viem'
 import { useConfig } from 'wagmi'
 import { readContractQueryOptions } from 'wagmi/query'
 
@@ -16,11 +16,11 @@ export enum GameState {
     Dead,
 }
 
-export function useCurrentGame() {
+export function useCurrentGame(address: Address) {
     const config = useConfig()
     const options = readContractQueryOptions(config, {
         abi: LOOTERY_ABI,
-        address: CONTRACT_ADDRESS,
+        address,
         functionName: 'currentGame',
     })
 

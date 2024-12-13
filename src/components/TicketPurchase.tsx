@@ -37,7 +37,6 @@ import { cn } from '@/lib/utils'
 import { getChain } from '@/lib/wagmi'
 import { valibotResolver } from '@hookform/resolvers/valibot'
 import { CheckIcon, DicesIcon, Loader2Icon, PlusIcon, WalletMinimalIcon } from 'lucide-react'
-import Link from 'next/link'
 import { useRef, type ReactNode } from 'react'
 import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -106,7 +105,13 @@ const makeFieldSchema = (numbersCount: number) =>
 
 export type TicketPurchaseFields = InferOutput<ReturnType<typeof makeFieldSchema>>
 
-export function TicketPurchase({ onPurchase }: { onPurchase?: () => void }) {
+export function TicketPurchase({
+    contractAddress,
+    onPurchase,
+}: {
+    contractAddress: Address
+    onPurchase?: () => void
+}) {
     const client = usePublicClient()
     const chainId = useChainId()
     const chain = getChain(chainId)
@@ -114,7 +119,7 @@ export function TicketPurchase({ onPurchase }: { onPurchase?: () => void }) {
     const addTicketRef = useRef<HTMLButtonElement>(null)
 
     const { address, isConnected } = useAccount()
-    const { gameId, gameState } = useCurrentGame()
+    const { gameId, gameState } = useCurrentGame(contractAddress)
     const { isActive, accruedCommunityFees } = useGameData({ gameId })
     const { pickLength, maxBallValue, ticketPrice, prizeToken } = useGameConfig()
     const { refetch: refetchTickets } = useTickets({ address, gameId })
@@ -420,9 +425,9 @@ export function TicketPurchase({ onPurchase }: { onPurchase?: () => void }) {
                                     recommend relay.
                                 </p>
                                 <Button asChild>
-                                    <Link target="_blank" href={makeBridgeUrl(parseEther('0.01'))}>
+                                    <a target="_blank" href={makeBridgeUrl(parseEther('0.01'))}>
                                         Bridge to {chain?.name} using relay
-                                    </Link>
+                                    </a>
                                 </Button>
                             </AlertDescription>
                         </Alert>

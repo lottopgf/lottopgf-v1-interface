@@ -6,10 +6,11 @@ import { useTickets } from '@/hooks/useTickets'
 import { Suspense } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
 import { useAccount } from 'wagmi'
+import { Address } from 'viem'
 
-export function CurrentTickets() {
+export function CurrentTickets({ contractAddress }: { contractAddress: Address }) {
     const { address } = useAccount()
-    const { gameId } = useCurrentGame()
+    const { gameId } = useCurrentGame(contractAddress)
     const { tickets } = useTickets({
         address,
         gameId,
@@ -26,7 +27,7 @@ export function CurrentTickets() {
 
             <ErrorBoundary fallback={<p>Error</p>}>
                 <Suspense fallback={<TicketsSkeleton />}>
-                    <Tickets gameId={gameId} />
+                    <Tickets contractAddress={contractAddress} gameId={gameId} />
                 </Suspense>
             </ErrorBoundary>
         </div>
