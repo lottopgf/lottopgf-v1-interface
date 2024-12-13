@@ -7,15 +7,11 @@ export function useCreateLootery() {
     const { writeContractAsync, reset, status, error, data: hash } = useWriteContract()
     const factory = useLooteryFactory()
 
-    if (!factory) {
-        return {}
-    }
-
     const { data: receipt } = useWaitForTransactionReceipt({
         hash,
     })
     const looteryLaunchedEvent = useMemo(() => {
-        if (!receipt) {
+        if (!receipt || !factory) {
             return undefined
         }
         const events = parseEventLogs({
@@ -27,36 +23,38 @@ export function useCreateLootery() {
             return undefined
         }
         return events[0]
-    }, [factory.abi, receipt])
+    }, [factory?.abi, receipt])
 
-    const write = async (
-        name: string,
-        symbol: string,
-        pickLength: number,
-        maxBallValue: number,
-        gamePeriod: bigint,
-        ticketPrice: bigint,
-        communityFeeBps: bigint,
-        prizeToken: `0x${string}`,
-        seedJackpotDelay: bigint,
-        seedJackpotMinValue: bigint,
-    ) =>
-        writeContractAsync({
-            ...factory,
-            functionName: 'create',
-            args: [
-                name,
-                symbol,
-                pickLength,
-                maxBallValue,
-                gamePeriod,
-                ticketPrice,
-                communityFeeBps,
-                prizeToken,
-                seedJackpotDelay,
-                seedJackpotMinValue,
-            ],
-        })
+    const write = factory
+        ? async (
+              name: string,
+              symbol: string,
+              pickLength: number,
+              maxBallValue: number,
+              gamePeriod: bigint,
+              ticketPrice: bigint,
+              communityFeeBps: bigint,
+              prizeToken: `0x${string}`,
+              seedJackpotDelay: bigint,
+              seedJackpotMinValue: bigint,
+          ) =>
+              writeContractAsync({
+                  ...factory,
+                  functionName: 'create',
+                  args: [
+                      name,
+                      symbol,
+                      pickLength,
+                      maxBallValue,
+                      gamePeriod,
+                      ticketPrice,
+                      communityFeeBps,
+                      prizeToken,
+                      seedJackpotDelay,
+                      seedJackpotMinValue,
+                  ],
+              })
+        : undefined
 
     return {
         write,

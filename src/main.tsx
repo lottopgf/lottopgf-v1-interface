@@ -1,16 +1,22 @@
+import './globals.css'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { Provider } from './components/ui/provider'
+import { ThemeProvider } from 'next-themes'
 
 import App from './App.tsx'
 import { WalletProvider } from './components/WalletProvider.tsx'
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
-        <Provider>
+        <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+        >
             <WalletProvider>
                 <App />
             </WalletProvider>
-        </Provider>
+        </ThemeProvider>
     </StrictMode>,
 )

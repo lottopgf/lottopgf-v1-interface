@@ -1,18 +1,17 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit'
-import { ColorModeButton } from './ui/color-mode'
-import { HStack } from '@chakra-ui/react'
+import { ThemeToggle } from './ThemeToggle'
 import { Logo } from './Logo'
 
 export function Navbar() {
     return (
-        <HStack display="flex" alignItems="center" justifyContent="space-between" height="64px">
-            <HStack height="100%">
-                <Logo style={{ height: '60%' }} />
-            </HStack>
-            <HStack alignItems="center">
+        <div className="flex h-16 items-center justify-between px-4">
+            <div className="h-full flex flex-col justify-center">
+                <Logo className="h-[60%]" />
+            </div>
+            <div className="flex items-center gap-4">
                 <ConnectButton />
-                <ColorModeButton />
-            </HStack>
-        </HStack>
+                <ThemeToggle />
+            </div>
+        </div>
     )
 }

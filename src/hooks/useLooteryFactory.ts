@@ -1,6 +1,6 @@
 import { base, scroll } from 'viem/chains'
 import { useChainId } from 'wagmi'
-import LooteryFactoryABI from '../abis/LooteryFactory'
+import LooteryFactoryABI from '../abi/LooteryFactory'
 
 /** LottoPGF v1 deployed factory proxies */
 const factories: Record<number, `0x${string}`> = {

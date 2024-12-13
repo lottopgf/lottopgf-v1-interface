@@ -1,417 +1,404 @@
-import { Box, Heading, HStack, Input, Link, Text, VStack } from '@chakra-ui/react'
-import { Button } from '../components/ui/button'
-import { Field } from '../components/ui/field'
-import { Slider } from '../components/ui/slider'
-import { StepperInput } from '../components/ui/stepper-input'
-import { useCallback, useMemo, useState } from 'react'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
+import {
+    Form,
+    FormControl,
+    FormDescription,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from '@/components/ui/form'
 import z from 'zod'
-import debounce from 'lodash.debounce'
 import { formatUnits, getAddress, isAddress } from 'viem'
 import { useERC20 } from '../hooks/useERC20'
 import { useCreateLootery } from '../hooks/useCreateLootery'
 import { useChainId } from 'wagmi'
-import { chains } from '../components/WalletProvider'
+import { chains } from '@/lib/wagmi'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Slider } from '@/components/ui/slider'
+import { Loader2Icon } from 'lucide-react'
 
-const NumericSchema = z.string().regex(/^\d+$/).transform(Number)
-const BigIntSchema = z.string().regex(/^\d+$/).transform(BigInt)
+const AddressSchema = z
+    .string()
+    .refine((arg: string): arg is `0x${string}` => isAddress(arg), 'Invalid address')
+    .transform((arg) => getAddress(arg))
+
+const DeployFormSchema = z.object({
+    title: z.string().min(1, 'Title is required'),
+    symbol: z.string().min(1, 'Symbol is required'),
+    duration: z.coerce.number().min(600, 'Minimum 10 minutes'),
+    communityFeeBps: z.coerce.number(),
+    prizeTokenAddress: AddressSchema,
+    pickLength: z.coerce.number(),
+    maxBallValue: z.coerce.number(),
+    ticketPrice: z.coerce.bigint(),
+    seedJackpotDelay: z.coerce.bigint(),
+    seedJackpotMinValue: z.coerce.bigint(),
+})
 
 export function Deploy() {
-    const [title, setTitle] = useState('')
-    const [symbol, setSymbol] = useState('')
-    const [duration, _setDuration] = useState(3600)
-    const [communityFeeBps, _setCommunityFeeBps] = useState(50)
-    const [prizeTokenAddress, setPrizeTokenAddress] = useState('')
-    const [pickLength, setPickLength] = useState(5)
-    const [maxBallValue, setMaxBallValue] = useState(25)
-    const [ticketPrice, _setTicketPrice] = useState(10n ** 18n)
-    // const [beneficiaries, setBeneficiaries] = useState([] as string[])
-    const [seedJackpotDelay, setSeedJackpotDelay] = useState(600n)
-    const [seedJackpotMinValue, setSeedJackpotMinValue] = useState(10n ** 18n)
+    const form = useForm<z.infer<typeof DeployFormSchema>>({
+        resolver: zodResolver(DeployFormSchema),
+        defaultValues: {
+            title: '',
+            symbol: '',
+            duration: 3600,
+            communityFeeBps: 50,
+            prizeTokenAddress: '0x4200000000000000000000000000000000000006',
+            pickLength: 5,
+            maxBallValue: 25,
+            ticketPrice: 10n ** 18n,
+            seedJackpotDelay: 600n,
+            seedJackpotMinValue: 10n ** 18n,
+        },
+    })
 
-    const setDuration = useCallback(
-        debounce((value: string) => {
-            const { success, data } = NumericSchema.safeParse(value)
-            if (success) {
-                _setDuration(data)
-            }
-        }),
-        [_setDuration],
-    )
-
-    const setCommunityFeeBps = useCallback(
-        debounce((value: number) => {
-            const bps = value * 100
-            _setCommunityFeeBps(bps)
-        }),
-        [_setCommunityFeeBps],
-    )
-
-    const isValidTokenAddress = useMemo(() => {
-        try {
-            const maybeAddress = getAddress(prizeTokenAddress)
-            return isAddress(maybeAddress)
-        } catch (err) {
-            return false
-        }
-    }, [prizeTokenAddress])
-
-    const {
-        name: prizeTokenName,
-        symbol: prizeTokenSymbol,
-        decimals: prizeTokenDecimals,
-    } = useERC20(prizeTokenAddress as `0x${string}`)
-
-    const setTicketPrice = useCallback(
-        debounce((value: string) => {
-            const { success, data } = BigIntSchema.safeParse(value)
-            if (success) {
-                _setTicketPrice(data)
-            }
-        }),
-        [_setTicketPrice],
-    )
-
-    // Ephemeral state for adding beneficiaries
-    // const [isAddingBeneficiary, setIsAddingBeneficiary] = useState(false)
-    // const [newBeneficiaryName, setNewBeneficiaryName] = useState('')
+    const { symbol: prizeTokenSymbol } = useERC20(form.watch('prizeTokenAddress'))
 
     const {
         write: createLootery,
         status: createLooteryStatus,
         looteryLaunchedEvent,
     } = useCreateLootery()
-    const launch = useCallback(async () => {
-        if (!createLootery) {
-            return
-        }
 
+    const launch = async (values: z.infer<typeof DeployFormSchema>) => {
+        if (!createLootery) return
         await createLootery(
-            title,
-            symbol,
-            pickLength,
-            maxBallValue,
-            BigInt(duration),
-            ticketPrice,
-            BigInt(communityFeeBps),
-            prizeTokenAddress as `0x${string}`,
-            BigInt(seedJackpotDelay),
-            BigInt(seedJackpotMinValue),
+            values.title,
+            values.symbol,
+            values.pickLength,
+            values.maxBallValue,
+            BigInt(values.duration),
+            values.ticketPrice,
+            BigInt(values.communityFeeBps),
+            values.prizeTokenAddress,
+            BigInt(values.seedJackpotDelay),
+            BigInt(values.seedJackpotMinValue),
         )
-    }, [
-        createLootery,
-        title,
-        symbol,
-        pickLength,
-        maxBallValue,
-        duration,
-        ticketPrice,
-        communityFeeBps,
-        prizeTokenAddress,
-        seedJackpotDelay,
-        seedJackpotMinValue,
-    ])
+    }
 
     const chainId = useChainId()
     const chain = chains.find((c) => c.id === chainId)
 
     return (
-        <>
-            <VStack alignItems="flex-start">
-                <Box width="md">
-                    <Heading size="3xl" fontWeight="normal" textAlign="left" mt={16}>
-                        Launch a permissionless lottery to fund public goods
-                    </Heading>
-                </Box>
+        <div className="flex flex-col space-y-8 w-full max-w-2xl mx-auto">
+            <div className="w-full">
+                <h1 className="text-4xl font-normal mt-16">
+                    Launch a permissionless lottery to fund public goods
+                </h1>
 
-                {/** Lottery details */}
-                <VStack width="md" alignItems="flex-start" mt={16}>
-                    <Heading size="lg">Lottery details</Heading>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(launch)}>
+                        {/* Lottery details */}
+                        <div className="flex flex-col space-y-4 mt-8">
+                            <h2 className="text-2xl">Lottery details</h2>
 
-                    <Field label="Lottery title" mt={4}>
-                        <Input
-                            placeholder="The biggest lottery ever"
-                            variant="outline"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                        />
-                    </Field>
+                            <div className="space-y-2">
+                                <FormField
+                                    control={form.control}
+                                    name="title"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-sm font-medium">
+                                                Lottery title
+                                            </FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="The biggest lottery ever"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormDescription>
+                                                The title of the lottery
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
-                    <Field
-                        label="Lottery symbol"
-                        mt={8}
-                        helperText="The symbol of the lottery, used for NFT tickets"
-                    >
-                        <Input
-                            placeholder="PWRBLD"
-                            variant="outline"
-                            value={symbol}
-                            onChange={(e) => setSymbol(e.target.value)}
-                        />
-                    </Field>
-                </VStack>
+                            <div className="space-y-2">
+                                <FormField
+                                    control={form.control}
+                                    name="symbol"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-sm font-medium">
+                                                Lottery symbol
+                                            </FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="PWRBLD" {...field} />
+                                            </FormControl>
+                                            <FormDescription>
+                                                The symbol of the lottery, used for NFT tickets
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        </div>
 
-                {/** Lottery settings */}
-                <VStack width="md" alignItems="flex-start" mt={16}>
-                    <Heading size="lg">Lottery settings</Heading>
+                        {/* Lottery settings */}
+                        <div className="flex flex-col space-y-4 mt-8">
+                            <h2 className="text-2xl">Lottery settings</h2>
 
-                    <Field
-                        label="Duration until draw, in seconds"
-                        mt={4}
-                        helperText="Minimum 10 minutes"
-                    >
-                        <Input
-                            type="number"
-                            placeholder="3600"
-                            variant="outline"
-                            value={duration}
-                            onChange={(e) => setDuration(e.target.value)}
-                        />
-                    </Field>
+                            <div className="space-y-2">
+                                <FormField
+                                    control={form.control}
+                                    name="duration"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-sm font-medium">
+                                                Duration until draw, in seconds
+                                            </FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="number"
+                                                    placeholder="3600"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormDescription>Minimum 10 minutes</FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
-                    <Field
-                        label="Community fee, in %"
-                        mt={8}
-                        helperText="Percentage of ticket price that goes to the community"
-                        errorText={'Maximum community fee is 95% (5% reserved for protocol)'}
-                        invalid={communityFeeBps > 9500}
-                    >
-                        <HStack width="100%" gap={4}>
-                            <Slider
-                                width="100%"
-                                size="md"
-                                value={[Math.floor(communityFeeBps / 100)]}
-                                onValueChange={(details) => setCommunityFeeBps(details.value[0])}
-                            />
-                            <Box>{`${Math.floor(communityFeeBps / 100)}%`}</Box>
-                        </HStack>
-                    </Field>
+                            <div className="space-y-2">
+                                <FormField
+                                    control={form.control}
+                                    name="communityFeeBps"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-sm font-medium">
+                                                Community fee, in %
+                                            </FormLabel>
+                                            <div className="flex items-center gap-4">
+                                                <FormControl>
+                                                    <Slider
+                                                        className="flex-1"
+                                                        value={[field.value / 100]}
+                                                        onValueChange={(values) => {
+                                                            field.onChange(values[0] * 100)
+                                                        }}
+                                                        max={95}
+                                                    />
+                                                </FormControl>
+                                                <>{Math.floor(field.value / 100)}%</>
+                                            </div>
+                                            <FormDescription>
+                                                Percentage of ticket price that goes to the
+                                                community
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
-                    <Field
-                        label="Prize token contract address"
-                        mt={8}
-                        helperText="The token that will be used as prize payout and ticket purchases"
-                        errorText="Invalid token address"
-                        invalid={!isValidTokenAddress}
-                    >
-                        <Input
-                            placeholder="0x4200000000000000000000000000000000000006"
-                            value={prizeTokenAddress}
-                            onChange={(e) => setPrizeTokenAddress(e.target.value)}
-                            variant="outline"
-                        />
-                        {prizeTokenName && prizeTokenSymbol && (
-                            <Text fontSize="sm">
-                                {prizeTokenName} ({prizeTokenSymbol})
-                            </Text>
-                        )}
-                    </Field>
+                            <div className="space-y-2">
+                                <FormField
+                                    control={form.control}
+                                    name="prizeTokenAddress"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-sm font-medium">
+                                                Prize token contract address
+                                            </FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="0x4200000000000000000000000000000000000006"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormDescription>
+                                                The token that will be used as prize payout and
+                                                ticket purchases
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
-                    <Field
-                        label="Seed jackpot delay, in seconds"
-                        mt={8}
-                        helperText="Rate-limiter for manual jackpot seeding"
-                    >
-                        <Input
-                            type="number"
-                            placeholder="600"
-                            variant="outline"
-                            value={seedJackpotDelay.toString()}
-                            onChange={(e) => setSeedJackpotDelay(BigInt(e.target.value))}
-                        />
-                    </Field>
+                            <div className="space-y-2">
+                                <FormField
+                                    control={form.control}
+                                    name="seedJackpotDelay"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-sm font-medium">
+                                                Seed jackpot delay, in seconds
+                                            </FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="number"
+                                                    placeholder="600"
+                                                    {...field}
+                                                    value={field.value.toString()}
+                                                />
+                                            </FormControl>
+                                            <FormDescription>
+                                                Rate-limiter for manual jackpot seeding
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
-                    <Field
-                        label="Seed jackpot minimum value, in the prize token's decimals"
-                        mt={8}
-                        helperText="Minimum value for manual jackpot seeding"
-                    >
-                        <Input
-                            type="number"
-                            placeholder="1000000000000000000"
-                            variant="outline"
-                            value={seedJackpotMinValue.toString()}
-                            onChange={(e) => setSeedJackpotMinValue(BigInt(e.target.value))}
-                        />
-                    </Field>
-                </VStack>
+                            <div className="space-y-2">
+                                <FormField
+                                    control={form.control}
+                                    name="seedJackpotMinValue"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-sm font-medium">
+                                                Seed jackpot minimum value
+                                            </FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="number"
+                                                    placeholder="1000000000000000000"
+                                                    {...field}
+                                                    value={field.value.toString()}
+                                                />
+                                            </FormControl>
+                                            <FormDescription>
+                                                Minimum value for manual jackpot seeding
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        </div>
 
-                {/** Ticket configuration */}
-                <VStack width="md" alignItems="flex-start" mt={16}>
-                    <Heading size="lg">Ticket configuration</Heading>
+                        {/* Ticket configuration */}
+                        <div className="flex flex-col space-y-4 mt-8">
+                            <h2 className="text-2xl">Ticket configuration</h2>
 
-                    <HStack justifyContent="space-between" width="100%">
-                        <Field
-                            label="Numbers range to"
-                            mt={8}
-                            helperText="Select the highest number that can be picked (the lowest number is always 1)"
-                        />
-                        <StepperInput
-                            value={maxBallValue.toString()}
-                            onValueChange={(details) => setMaxBallValue(details.valueAsNumber)}
-                        />
-                    </HStack>
+                            <div className="w-full flex justify-between items-center">
+                                <FormField
+                                    control={form.control}
+                                    name="maxBallValue"
+                                    render={({ field }) => (
+                                        <FormItem className="w-full flex items-center justify-between">
+                                            <div className="flex flex-col space-y-1">
+                                                <FormLabel className="text-sm font-medium">
+                                                    Numbers range to
+                                                </FormLabel>
+                                                <FormDescription>
+                                                    Select the highest number that can be picked
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </div>
+                                            <FormControl>
+                                                <Input type="number" className="w-24" {...field} />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
-                    <HStack justifyContent="space-between" width="100%">
-                        <Field
-                            label="Pick length"
-                            mt={8}
-                            helperText="How many numbers to be picked per ticket"
-                        />
-                        <StepperInput
-                            value={pickLength.toString()}
-                            onValueChange={(details) => setPickLength(details.valueAsNumber)}
-                        />
-                    </HStack>
+                            <div className="flex justify-between items-center">
+                                <FormField
+                                    control={form.control}
+                                    name="pickLength"
+                                    render={({ field }) => (
+                                        <FormItem className="w-full flex items-center justify-between">
+                                            <div className="space-y-2">
+                                                <FormLabel className="text-sm font-medium">
+                                                    Pick length
+                                                </FormLabel>
+                                                <FormDescription>
+                                                    How many numbers to be picked per ticket
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </div>
+                                            <FormControl>
+                                                <Input type="number" className="w-24" {...field} />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
-                    <Field
-                        label="Ticket price"
-                        mt={8}
-                        helperText="The price of a ticket, in the prize token's decimals"
-                    >
-                        <Input
-                            type="text"
-                            placeholder="1000000000000000000"
-                            variant="outline"
-                            value={ticketPrice.toString()}
-                            onChange={(event) => setTicketPrice(event.target.value)}
-                        />
-                        {prizeTokenDecimals && prizeTokenSymbol && (
-                            <Text fontSize="sm" width="40%">
-                                {formatUnits(ticketPrice, prizeTokenDecimals)} {prizeTokenSymbol}
-                            </Text>
-                        )}
-                    </Field>
-                </VStack>
+                            <div className="space-y-2">
+                                <FormField
+                                    control={form.control}
+                                    name="ticketPrice"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-sm font-medium">
+                                                Ticket price
+                                            </FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="text"
+                                                    placeholder="1000000000000000000"
+                                                    {...field}
+                                                    value={field.value.toString()}
+                                                />
+                                            </FormControl>
+                                            <FormDescription>
+                                                The price of a ticket, in the prize token's
+                                                decimals.{' '}
+                                                {field.value &&
+                                                    prizeTokenSymbol &&
+                                                    `(${formatUnits(field.value, 18)} ${prizeTokenSymbol})`}
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        </div>
 
-                {/** Beneficiaries */}
-                {/* <VStack width="2xl" alignItems="flex-start" mt={16}>
-                    <Heading size="lg">Add causes to fund with the lottery</Heading>
+                        <div className="w-full">
+                            <h1 className="text-4xl font-normal mt-16">
+                                Let's fund public goods 🫡
+                            </h1>
+                        </div>
 
-                    <Card.Root width="100%">
-                        <Card.Body gap={1}>
-                            <Box
-                                position="absolute"
-                                top={0}
-                                right={0}
-                                m={2}
-                                borderRadius={12}
-                                borderStyle="solid"
-                                borderWidth={1}
-                                borderColor="green.400"
-                                color="green.500"
-                                fontSize="xs"
-                                px={2}
-                                py={1}
-                            >
-                                Main cause
-                            </Box>
-                            <Card.Title>{title || 'Main fund'}</Card.Title>
-                            <Card.Description>
-                                This is the default beneficiary and the proceeds will be stored in
-                                the deployed lottery contract.
-                            </Card.Description>
-                        </Card.Body>
-                    </Card.Root> */}
+                        <Button
+                            type="submit"
+                            className="mt-4"
+                            size="lg"
+                            onClick={form.handleSubmit(launch)}
+                            disabled={createLooteryStatus === 'success'}
+                        >
+                            {createLooteryStatus === 'pending' ? (
+                                <>
+                                    <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                                    Launching...
+                                </>
+                            ) : (
+                                'Launch'
+                            )}
+                        </Button>
+                    </form>
+                </Form>
 
-                {/** Other beneficiaries */}
-                {/* <Grid templateColumns="repeat(2, 1fr)" mt={2} gap={4} width="100%">
-                        {beneficiaries.map((beneficiary) => (
-                            <Card.Root width="100%">
-                                <Card.Body gap={1}>
-                                    <Card.Title>{beneficiary}</Card.Title>
-                                    <Card.Description>
-                                        {beneficiary} will receive{' '}
-                                        {Math.floor(communityFeeBps / 100)}% of the proceeds if
-                                        selected by the ticket purchaser.
-                                    </Card.Description>
-                                </Card.Body>
-                            </Card.Root>
-                        ))}
-                        <Card.Root width="100%">
-                            <Card.Body gap={1}>
-                                {!isAddingBeneficiary && (
-                                    <Button
-                                        variant="ghost"
-                                        width="100%"
-                                        onClick={() => setIsAddingBeneficiary(true)}
-                                    >
-                                        + Add another cause
-                                    </Button>
-                                )}
-                                {isAddingBeneficiary && (
-                                    <Card.Description>
-                                        <Field label="Cause title">
-                                            <Input
-                                                placeholder="Meowfund"
-                                                variant="outline"
-                                                value={newBeneficiaryName}
-                                                onChange={(event) =>
-                                                    setNewBeneficiaryName(event.target.value)
-                                                }
-                                            />
-                                        </Field>
-                                        <Button
-                                            variant="outline"
-                                            colorPalette="green"
-                                            mt={4}
-                                            width="100%"
-                                            disabled={
-                                                !newBeneficiaryName ||
-                                                Boolean(
-                                                    beneficiaries.find(
-                                                        (b) => b === newBeneficiaryName,
-                                                    ),
-                                                )
-                                            }
-                                            onClick={() => {
-                                                setBeneficiaries([
-                                                    ...beneficiaries,
-                                                    newBeneficiaryName,
-                                                ])
-                                                setNewBeneficiaryName('')
-                                                setIsAddingBeneficiary(false)
-                                            }}
-                                        >
-                                            Confirm
-                                        </Button>
-                                    </Card.Description>
-                                )}
-                            </Card.Body>
-                        </Card.Root>
-                    </Grid>
-                </VStack> */}
-
-                <Box width="md">
-                    <Heading size="3xl" fontWeight="normal" textAlign="left" mt={16}>
-                        Let{`'`}s fund public goods 🫡
-                    </Heading>
-                </Box>
-                <Button
-                    variant="solid"
-                    colorPalette="green"
-                    size="xl"
-                    mt={4}
-                    onClick={launch}
-                    disabled={createLooteryStatus === 'success'}
-                    loading={createLooteryStatus === 'pending'}
-                >
-                    Launch
-                </Button>
                 {chain && looteryLaunchedEvent && (
-                    <Text fontSize="lg" mt={4}>
+                    <p className="text-lg mt-4">
                         Lottery deployed at{' '}
-                        <Link
-                            variant="underline"
+                        <a
+                            className="underline hover:no-underline"
                             href={`${new URL(`/address/${looteryLaunchedEvent.args.looteryProxy}`, chain.blockExplorers.default.url)}`}
                             target="_blank"
                             rel="noreferrer"
                         >
                             {looteryLaunchedEvent.args.looteryProxy}
-                        </Link>{' '}
+                        </a>{' '}
                         🙌
-                    </Text>
+                    </p>
                 )}
-            </VStack>
-        </>
+            </div>
+        </div>
     )
 }
