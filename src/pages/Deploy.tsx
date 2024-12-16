@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Slider } from '@/components/ui/slider'
 import { Loader2Icon } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
 
 const AddressSchema = z
     .string()
@@ -376,14 +377,17 @@ export function Deploy() {
             {chain && looteryLaunchedEvent && (
                 <p className="text-lg mt-4">
                     Lottery deployed at{' '}
-                    <a
+                    <Link
                         className="underline hover:no-underline"
-                        href={`${new URL(`/address/${looteryLaunchedEvent.args.looteryProxy}`, chain.blockExplorers.default.url)}`}
                         target="_blank"
-                        rel="noreferrer"
+                        to="/lottery/$chainId/$address"
+                        params={{
+                            chainId: String(chain.id),
+                            address: looteryLaunchedEvent.args.looteryProxy,
+                        }}
                     >
                         {looteryLaunchedEvent.args.looteryProxy}
-                    </a>{' '}
+                    </Link>
                     🙌
                 </p>
             )}
