@@ -12,6 +12,7 @@ export function CurrentTickets({ contractAddress }: { contractAddress: Address }
     const { address } = useAccount()
     const { gameId } = useCurrentGame(contractAddress)
     const { tickets } = useTickets({
+        contractAddress,
         address,
         gameId,
     })

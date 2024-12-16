@@ -1,19 +1,30 @@
 import { LOOTERY_ABI } from '@/abi/Lootery'
 import { Button } from '@/components/ui/button'
-import { CHAIN, CONTRACT_ADDRESS } from '@/config'
 import { extractErrorMessages, handleTransactionError } from '@/lib/error'
+import { getChain } from '@/lib/wagmi'
 import { Loader2Icon } from 'lucide-react'
 import { toast } from 'sonner'
-import { ContractFunctionExecutionError } from 'viem'
+import { Address, ContractFunctionExecutionError } from 'viem'
 import {
+    useChainId,
     usePublicClient,
     useSimulateContract,
     useWaitForTransactionReceipt,
     useWriteContract,
 } from 'wagmi'
 
-export function TicketClaimButton({ tokenId, onClaim }: { tokenId: bigint; onClaim?: () => void }) {
+export function TicketClaimButton({
+    contractAddress,
+    tokenId,
+    onClaim,
+}: {
+    contractAddress: Address
+    tokenId: bigint
+    onClaim?: () => void
+}) {
     const client = usePublicClient()
+    const chainId = useChainId()
+    const chain = getChain(chainId)
 
     const {
         data,
@@ -21,9 +32,9 @@ export function TicketClaimButton({ tokenId, onClaim }: { tokenId: bigint; onCla
         isError,
         isPending: isSimulating,
     } = useSimulateContract({
-        chainId: CHAIN.id,
+        chainId,
         abi: LOOTERY_ABI,
-        address: CONTRACT_ADDRESS,
+        address: contractAddress,
         functionName: 'claimWinnings',
         args: [tokenId],
     })
@@ -51,7 +62,7 @@ export function TicketClaimButton({ tokenId, onClaim }: { tokenId: bigint; onCla
                     label: 'Explorer',
                     onClick(e) {
                         e.preventDefault()
-                        window.open(`${CHAIN.blockExplorers.default.url}/tx/${hash}`, '_blank')
+                        window.open(`${chain?.blockExplorers.default.url}/tx/${hash}`, '_blank')
                     },
                 },
                 success: 'Prize has been claimed!',

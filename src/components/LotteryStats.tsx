@@ -1,10 +1,7 @@
-'use client'
-
 import { Amount } from '@/components/Amount'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
+// import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
-import { FUNDRAISE_TARGET, PRIZE_TOKEN_DECIMALS, PRIZE_TOKEN_TICKER } from '@/config'
 import { useCurrentGame } from '@/hooks/useCurrentGame'
 import { useGameData } from '@/hooks/useGameData'
 import { useTickets } from '@/hooks/useTickets'
@@ -12,6 +9,8 @@ import { Address } from 'viem'
 import type { ReactNode } from 'react'
 import Countdown, { type CountdownRendererFn } from 'react-countdown'
 import { useAccount } from 'wagmi'
+import { useGameConfig } from '@/hooks/useGameConfig'
+import { useERC20 } from '@/hooks/useERC20'
 
 const STATS_REFRESH_INTERVAL = 5000
 const SHOW_FUNDS_RAISED = false
@@ -20,19 +19,25 @@ export function LotteryStats({ contractAddress }: { contractAddress: Address }) 
     const { address } = useAccount()
     const { gameId } = useCurrentGame(contractAddress)
     const { jackpot, ticketsSold, roundEndTime, accruedCommunityFees } = useGameData({
+        contractAddress,
         gameId,
         refetchInterval: STATS_REFRESH_INTERVAL,
     })
     const { tickets } = useTickets({
+        contractAddress,
         address,
         gameId,
     })
 
     const numberOfTickets = tickets?.length ?? 0
 
-    const percentageRaised = FUNDRAISE_TARGET
-        ? (accruedCommunityFees * 100n) / FUNDRAISE_TARGET
-        : 0n
+    // TODO(metadata)
+    // const percentageRaised = FUNDRAISE_TARGET
+    //     ? (accruedCommunityFees * 100n) / FUNDRAISE_TARGET
+    //     : 0n
+
+    const { prizeToken } = useGameConfig(contractAddress)
+    const { symbol: prizeTokenSymbol, decimals: prizeTokenDecimals } = useERC20(prizeToken)
 
     const renderer: CountdownRendererFn = ({ days, hours, minutes, seconds, completed }) => {
         return completed ? (
@@ -57,17 +62,20 @@ export function LotteryStats({ contractAddress }: { contractAddress: Address }) 
                             <CardTitle>
                                 <div>
                                     <span className="text-3xl sm:text-5xl">
-                                        <Amount
-                                            value={accruedCommunityFees}
-                                            decimals={PRIZE_TOKEN_DECIMALS}
-                                        />
+                                        {prizeTokenDecimals && (
+                                            <Amount
+                                                value={accruedCommunityFees}
+                                                decimals={prizeTokenDecimals}
+                                            />
+                                        )}
                                     </span>{' '}
                                     <span className="text-base text-muted-foreground">
-                                        {PRIZE_TOKEN_TICKER}
+                                        {prizeTokenSymbol}
                                     </span>
                                 </div>
 
-                                {!!FUNDRAISE_TARGET && (
+                                {/** TODO(metadata) */}
+                                {/* {!!FUNDRAISE_TARGET && (
                                     <div className="text-sm">
                                         <span className="text-muted-foreground">of</span>{' '}
                                         <span className="text-white">
@@ -80,9 +88,10 @@ export function LotteryStats({ contractAddress }: { contractAddress: Address }) 
                                             {PRIZE_TOKEN_TICKER}
                                         </span>
                                     </div>
-                                )}
+                                )} */}
                             </CardTitle>
-                            <div className="flex items-center gap-2">
+                            {/** TODO(metadata) */}
+                            {/* <div className="flex items-center gap-2">
                                 <Progress
                                     className="h-3"
                                     value={parseInt(percentageRaised.toString())}
@@ -90,7 +99,7 @@ export function LotteryStats({ contractAddress }: { contractAddress: Address }) 
                                 <span className="text-sm tabular-nums text-foreground">
                                     {percentageRaised.toLocaleString('en-US')}%
                                 </span>
-                            </div>
+                            </div> */}
                         </CardHeader>
                     </Card>
                 )}
@@ -100,10 +109,12 @@ export function LotteryStats({ contractAddress }: { contractAddress: Address }) 
                         <CardDescription>Jackpot</CardDescription>
                         <CardTitle>
                             <DetailsCardTitle>
-                                <Amount value={jackpot} decimals={PRIZE_TOKEN_DECIMALS} />
+                                {prizeTokenDecimals && (
+                                    <Amount value={jackpot} decimals={prizeTokenDecimals} />
+                                )}
                             </DetailsCardTitle>{' '}
                             <span className="text-base text-muted-foreground">
-                                {PRIZE_TOKEN_TICKER}
+                                {prizeTokenSymbol}
                             </span>
                         </CardTitle>
                     </CardHeader>

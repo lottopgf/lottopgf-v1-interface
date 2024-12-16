@@ -16,17 +16,10 @@ import {
     CardTitle,
 } from '@/components/ui/card'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
-import {
-    COLLECTIVE_FUND_METADATA,
-    CONTRACT_ADDRESS,
-    LOOTERY_ETH_ADAPTER_ADDRESS,
-    PRIZE_TOKEN_DECIMALS,
-    PRIZE_TOKEN_IS_NATIVE,
-    PRIZE_TOKEN_TICKER,
-} from '@/config'
-import { FUNDRAISERS } from '@/fundraisers'
+import { COLLECTIVE_FUND_METADATA, looteryEthAdapterAddress } from '@/config'
 import { useBalanceWithAllowance } from '@/hooks/useBalanceWithAllowance'
 import { GameState, useCurrentGame } from '@/hooks/useCurrentGame'
+import { useERC20 } from '@/hooks/useERC20'
 import { useGameConfig } from '@/hooks/useGameConfig'
 import { useGameData } from '@/hooks/useGameData'
 import { useTickets } from '@/hooks/useTickets'
@@ -120,9 +113,13 @@ export function TicketPurchase({
 
     const { address, isConnected } = useAccount()
     const { gameId, gameState } = useCurrentGame(contractAddress)
-    const { isActive, accruedCommunityFees } = useGameData({ gameId })
-    const { pickLength, maxBallValue, ticketPrice, prizeToken } = useGameConfig()
-    const { refetch: refetchTickets } = useTickets({ address, gameId })
+    const { isActive, accruedCommunityFees } = useGameData({ contractAddress, gameId })
+    const { pickLength, maxBallValue, ticketPrice, prizeToken, isPrizeTokenNative } =
+        useGameConfig(contractAddress)
+    const { symbol: prizeTokenSymbol, decimals: prizeTokenDecimals } = useERC20(prizeToken)
+    const { refetch: refetchTickets } = useTickets({ contractAddress, address, gameId })
+    const LOOTERY_ETH_ADAPTER_ADDRESS =
+        looteryEthAdapterAddress[chainId as keyof typeof looteryEthAdapterAddress]
 
     const {
         balance,
@@ -131,6 +128,7 @@ export function TicketPurchase({
         refetch: refetchAllowance,
         isPendingAllowance,
     } = useBalanceWithAllowance({
+        contractAddress,
         address,
         token: prizeToken,
     })
@@ -187,7 +185,7 @@ export function TicketPurchase({
                 pick: [...numbers].sort((a, b) => a - b),
             }))
 
-            if (PRIZE_TOKEN_IS_NATIVE) {
+            if (isPrizeTokenNative && LOOTERY_ETH_ADAPTER_ADDRESS) {
                 hash = await writeContractAsync({
                     chain,
                     type: 'eip1559',
@@ -195,7 +193,7 @@ export function TicketPurchase({
                     address: LOOTERY_ETH_ADAPTER_ADDRESS,
                     functionName: 'purchase',
                     value: totalPrice,
-                    args: [CONTRACT_ADDRESS, picks, fields.recipient],
+                    args: [contractAddress, picks, fields.recipient],
                 })
             } else {
                 if (!hasEnoughAllowance) return
@@ -204,7 +202,7 @@ export function TicketPurchase({
                     chain,
                     type: 'eip1559',
                     abi: LOOTERY_ABI,
-                    address: CONTRACT_ADDRESS,
+                    address: contractAddress,
                     functionName: 'purchase',
                     args: [picks, fields.recipient],
                 })
@@ -289,10 +287,12 @@ export function TicketPurchase({
                                         </div>
                                         <p className="text-muted-foreground">
                                             <span className="font-semibold text-foreground">
-                                                <Amount
-                                                    value={accruedCommunityFees}
-                                                    decimals={PRIZE_TOKEN_DECIMALS}
-                                                />
+                                                {prizeTokenDecimals && (
+                                                    <Amount
+                                                        value={accruedCommunityFees}
+                                                        decimals={prizeTokenDecimals}
+                                                    />
+                                                )}
                                             </span>{' '}
                                             ETH raised
                                         </p>
@@ -324,11 +324,13 @@ export function TicketPurchase({
                                 </div>
                             </CardHeader>
                         </Card>
-                        {FUNDRAISERS.map((fundraiser, i) => {
+                        {/** TODO(metadata) */}
+                        {/* {FUNDRAISERS.map((fundraiser, i) => {
                             const isActive = isAddressEqual(fundraiser.address, recipient)
                             return (
                                 <FundraiserCard
                                     key={i}
+                                    contractAddress={contractAddress}
                                     title={fundraiser.title}
                                     description={fundraiser.description}
                                     targetAmount={fundraiser.targetAmount}
@@ -337,7 +339,7 @@ export function TicketPurchase({
                                     onClick={() => setValue('recipient', fundraiser.address)}
                                 />
                             )
-                        })}
+                        })} */}
                     </div>
                 </section>
 
@@ -364,6 +366,7 @@ export function TicketPurchase({
                                         key={field.id}
                                     >
                                         <NumberPicker
+                                            contractAddress={contractAddress}
                                             index={index}
                                             name={`tickets.${index}`}
                                             onRemove={fields.length > 1 ? remove : undefined}
@@ -418,14 +421,17 @@ export function TicketPurchase({
                     {!hasEnoughBalance && (
                         <Alert>
                             <WalletMinimalIcon className="size-4" />
-                            <AlertTitle>Need more {PRIZE_TOKEN_TICKER}?</AlertTitle>
+                            <AlertTitle>Need more {prizeTokenSymbol}?</AlertTitle>
                             <AlertDescription className="space-y-2">
                                 <p>
                                     You can bridge funds from other chains to {chain?.name}. We
                                     recommend relay.
                                 </p>
                                 <Button asChild>
-                                    <a target="_blank" href={makeBridgeUrl(parseEther('0.01'))}>
+                                    <a
+                                        target="_blank"
+                                        href={makeBridgeUrl(chainId, parseEther('0.01')) || '#'}
+                                    >
                                         Bridge to {chain?.name} using relay
                                     </a>
                                 </Button>
@@ -441,23 +447,27 @@ export function TicketPurchase({
                                             <p>
                                                 Buying {tickets.length}{' '}
                                                 {tickets.length === 1 ? 'ticket' : 'tickets'} for{' '}
-                                                <Amount
-                                                    value={totalPrice}
-                                                    decimals={PRIZE_TOKEN_DECIMALS}
-                                                />{' '}
-                                                {PRIZE_TOKEN_TICKER}
+                                                {prizeTokenDecimals && (
+                                                    <Amount
+                                                        value={totalPrice}
+                                                        decimals={prizeTokenDecimals}
+                                                    />
+                                                )}
+                                                {prizeTokenSymbol}
                                             </p>
                                             <p className="text-sm text-muted-foreground">
                                                 You have{' '}
-                                                <Amount
-                                                    value={balance}
-                                                    decimals={PRIZE_TOKEN_DECIMALS}
-                                                />{' '}
-                                                {PRIZE_TOKEN_TICKER}
+                                                {prizeTokenDecimals && (
+                                                    <Amount
+                                                        value={balance}
+                                                        decimals={prizeTokenDecimals}
+                                                    />
+                                                )}
+                                                {prizeTokenSymbol}
                                             </p>
                                         </div>
 
-                                        {PRIZE_TOKEN_IS_NATIVE || hasEnoughAllowance ? (
+                                        {isPrizeTokenNative || hasEnoughAllowance ? (
                                             <Button size="sm" disabled={!hasEnoughBalance}>
                                                 {isLoading && (
                                                     <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
@@ -477,7 +487,7 @@ export function TicketPurchase({
                                                 {isPendingAllowance && (
                                                     <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
                                                 )}{' '}
-                                                Allow spending {PRIZE_TOKEN_TICKER}
+                                                Allow spending {prizeTokenSymbol}
                                             </Button>
                                         )}
                                     </>
@@ -485,19 +495,23 @@ export function TicketPurchase({
                                     <div>
                                         <p>
                                             You do not have enough balance. You need{' '}
-                                            <Amount
-                                                value={totalPrice}
-                                                decimals={PRIZE_TOKEN_DECIMALS}
-                                            />{' '}
-                                            {PRIZE_TOKEN_TICKER}.
+                                            {prizeTokenDecimals && (
+                                                <Amount
+                                                    value={totalPrice}
+                                                    decimals={prizeTokenDecimals}
+                                                />
+                                            )}{' '}
+                                            {prizeTokenSymbol}.
                                         </p>
                                         <p className="text-sm text-muted-foreground">
                                             You have{' '}
-                                            <Amount
-                                                value={balance}
-                                                decimals={PRIZE_TOKEN_DECIMALS}
-                                            />{' '}
-                                            {PRIZE_TOKEN_TICKER}
+                                            {prizeTokenDecimals && (
+                                                <Amount
+                                                    value={balance}
+                                                    decimals={prizeTokenDecimals}
+                                                />
+                                            )}{' '}
+                                            {prizeTokenSymbol}.
                                         </p>
                                     </div>
                                 )}
@@ -517,7 +531,9 @@ export function TicketPurchase({
     )
 }
 
-function FundraiserCard({
+/** TODO(metadata) */
+export function FundraiserCard({
+    contractAddress,
     title,
     description,
     targetAmount,
@@ -525,6 +541,8 @@ function FundraiserCard({
     isActive,
     onClick,
 }: {
+    /** Lootery proxy contract address */
+    contractAddress: Address
     title: string
     description?: ReactNode
     targetAmount?: bigint
@@ -532,7 +550,8 @@ function FundraiserCard({
     isActive: boolean
     onClick: () => void
 }) {
-    const { prizeToken } = useGameConfig()
+    const { prizeToken } = useGameConfig(contractAddress)
+    const { symbol: prizeTokenSymbol, decimals: prizeTokenDecimals } = useERC20(prizeToken)
     const { data: balance } = useReadContract({
         address: prizeToken,
         abi: erc20Abi,
@@ -549,15 +568,20 @@ function FundraiserCard({
             <CardContent>
                 <div className="text-muted-foreground">
                     <span className="font-semibold text-foreground">
-                        <Amount value={balance ?? 0n} decimals={PRIZE_TOKEN_DECIMALS} />
+                        {prizeTokenDecimals && (
+                            <Amount value={balance ?? 0n} decimals={prizeTokenDecimals} />
+                        )}
                     </span>{' '}
                     {targetAmount ? (
                         <>
-                            of <Amount value={targetAmount} decimals={PRIZE_TOKEN_DECIMALS} />{' '}
-                            {PRIZE_TOKEN_TICKER}
+                            of{' '}
+                            {prizeTokenDecimals && (
+                                <Amount value={targetAmount} decimals={prizeTokenDecimals} />
+                            )}{' '}
+                            {prizeTokenSymbol}
                         </>
                     ) : (
-                        <>{PRIZE_TOKEN_TICKER} raised</>
+                        <>{prizeTokenSymbol} raised</>
                     )}
                 </div>
 

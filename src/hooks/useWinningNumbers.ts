@@ -1,7 +1,8 @@
-import { CONTRACT_ADDRESS, GRAPHQL_API } from '@/config'
+import { gqlApiUrl } from '@/config'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import request, { gql } from 'graphql-request'
 import type { Address } from 'viem'
+import { useChainId } from 'wagmi'
 
 const winningNumbersQuery = gql`
     query winningPick($lotteryId: String!, $gameId: String!) {
@@ -30,21 +31,21 @@ interface WinningNumbersData {
 
 export function useWinningNumbers({
     gameId,
-    lotteryId = CONTRACT_ADDRESS,
-    apiEndpoint = GRAPHQL_API,
+    contractAddress,
 }: {
     gameId: bigint | undefined
-    lotteryId?: Address
-    apiEndpoint?: string
+    contractAddress: Address
 }) {
+    const chainId = useChainId()
+    const apiEndpoint = gqlApiUrl[chainId]
     const { data, ...rest } = useSuspenseQuery<WinningNumbersData | null>({
-        queryKey: ['winningNumbers', lotteryId, gameId?.toString()],
+        queryKey: ['winningNumbers', contractAddress, gameId?.toString()],
         queryFn: async () => {
-            if (gameId === undefined) return null
+            if (gameId === undefined || !apiEndpoint) return null
 
             return request(apiEndpoint, winningNumbersQuery, {
-                lotteryId,
-                gameId: `${lotteryId}-${gameId?.toString()}`,
+                lotteryId: contractAddress,
+                gameId: `${contractAddress}-${gameId?.toString()}`,
             })
         },
     })

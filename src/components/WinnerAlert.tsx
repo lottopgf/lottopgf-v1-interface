@@ -4,12 +4,19 @@ import { useWinner } from '@/hooks/useWinner'
 import { PartyPopperIcon } from 'lucide-react'
 import ConfettiExplosion from 'react-confetti-explosion'
 import { withErrorBoundary } from 'react-error-boundary'
-import { isAddressEqual } from 'viem'
+import { Address, isAddressEqual } from 'viem'
 import { useAccount } from 'wagmi'
 
-function WinnerAlertComponent({ gameId }: { gameId: bigint }) {
+function WinnerAlertComponent({
+    contractAddress,
+    gameId,
+}: {
+    contractAddress: Address
+    gameId: bigint
+}) {
     const { address } = useAccount()
     const { winningIds, winningAddresses, isOverWithApocalypse } = useWinner({
+        contractAddress,
         gameId,
     })
 

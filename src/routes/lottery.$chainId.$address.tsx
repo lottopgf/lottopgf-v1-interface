@@ -1,21 +1,23 @@
 import { EthereumAddressSchema } from '@/lib/schemas'
 import { Lottery } from '@/pages/Lottery'
 import { createFileRoute } from '@tanstack/react-router'
-import { Address } from 'viem'
 import { z } from 'zod'
 
 export const Route = createFileRoute('/lottery/$chainId/$address')({
-    component: async ({ params }) => {
-        const p = z
+    loader: ({ params }) => {
+        return z
             .object({
                 chainId: z.coerce.number(),
                 address: EthereumAddressSchema,
             })
             .parse(params)
-        return <RouteComponent chainId={p.chainId} address={p.address} />
+    },
+    component: () => {
+        return <RouteComponent />
     },
 })
 
-function RouteComponent(props: { chainId: number; address: Address }) {
-    return <Lottery {...props} />
+function RouteComponent() {
+    const { chainId, address } = Route.useLoaderData()
+    return <Lottery chainId={chainId} address={address} />
 }

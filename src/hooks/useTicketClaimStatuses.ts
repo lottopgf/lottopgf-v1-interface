@@ -1,5 +1,4 @@
 import { LOOTERY_ABI } from '@/abi/Lootery'
-import { CONTRACT_ADDRESS } from '@/config'
 import { useGameData } from '@/hooks/useGameData'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { isAddressEqual, zeroAddress, type Address } from 'viem'
@@ -7,15 +6,18 @@ import { useConfig } from 'wagmi'
 import { readContractsQueryOptions } from 'wagmi/query'
 
 export function useTicketClaimStatuses({
+    contractAddress,
     address,
     ticketIds,
     gameId,
 }: {
+    contractAddress: Address
     address?: Address
     ticketIds: bigint[]
     gameId: bigint
 }) {
     const { winningPickId, isApocalypse, isActive } = useGameData({
+        contractAddress,
         gameId,
     })
     const config = useConfig()
@@ -24,7 +26,7 @@ export function useTicketClaimStatuses({
             (ticketId) =>
                 ({
                     abi: LOOTERY_ABI,
-                    address: CONTRACT_ADDRESS,
+                    address: contractAddress,
                     functionName: 'ownerOf',
                     args: [ticketId],
                 }) as const,
@@ -39,7 +41,7 @@ export function useTicketClaimStatuses({
             (ticketId) =>
                 ({
                     abi: LOOTERY_ABI,
-                    address: CONTRACT_ADDRESS,
+                    address: contractAddress,
                     functionName: 'purchasedTickets',
                     args: [ticketId],
                 }) as const,

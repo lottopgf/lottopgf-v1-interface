@@ -1,7 +1,14 @@
 import { useWinningNumbers } from '@/hooks/useWinningNumbers'
+import { Address } from 'viem/accounts'
 
-export function WinningNumbers({ gameId }: { gameId: bigint }) {
-    const { numbers } = useWinningNumbers({ gameId })
+export function WinningNumbers({
+    contractAddress,
+    gameId,
+}: {
+    contractAddress: Address
+    gameId: bigint
+}) {
+    const { numbers } = useWinningNumbers({ contractAddress, gameId })
 
     return <>{numbers ? <NumbersList numbers={numbers} /> : <span>–</span>}</>
 }

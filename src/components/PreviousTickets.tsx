@@ -1,5 +1,3 @@
-'use client'
-
 import { Tickets, TicketsSkeleton } from '@/components/Tickets'
 import { WinningNumbers } from '@/components/WinningNumbers'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -59,7 +57,10 @@ export function PreviousTickets({ contractAddress }: { contractAddress: Address 
                                         <Skeleton className="block w-[100px]">&nbsp;</Skeleton>
                                     }
                                 >
-                                    <WinningNumbers gameId={gameId} />
+                                    <WinningNumbers
+                                        contractAddress={contractAddress}
+                                        gameId={gameId}
+                                    />
                                 </Suspense>
                             </ErrorBoundary>
                         </div>

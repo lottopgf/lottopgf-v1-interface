@@ -1,15 +1,20 @@
 import { LOOTERY_ABI } from '@/abi/Lootery'
-import { CONTRACT_ADDRESS } from '@/config'
 import { useGameData } from '@/hooks/useGameData'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { ContractFunctionExecutionError } from 'viem'
+import { Address, ContractFunctionExecutionError } from 'viem'
 import { useConfig } from 'wagmi'
 import { readContractsQueryOptions } from 'wagmi/query'
 
-export function useWinner({ gameId }: { gameId: bigint }) {
+export function useWinner({
+    contractAddress,
+    gameId,
+}: {
+    contractAddress: Address
+    gameId: bigint
+}) {
     const config = useConfig()
 
-    const { winningPickId, isApocalypse, isActive } = useGameData({ gameId })
+    const { winningPickId, isApocalypse, isActive } = useGameData({ contractAddress, gameId })
 
     const isOverWithApocalypse = isApocalypse && !isActive
 
@@ -19,7 +24,7 @@ export function useWinner({ gameId }: { gameId: bigint }) {
             (_, i) =>
                 ({
                     abi: LOOTERY_ABI,
-                    address: CONTRACT_ADDRESS,
+                    address: contractAddress,
                     functionName: 'tokenByPickIdentity',
                     args: [gameId, winningPickId, BigInt(i)],
                 }) as const,
@@ -54,7 +59,7 @@ export function useWinner({ gameId }: { gameId: bigint }) {
             (id) =>
                 ({
                     abi: LOOTERY_ABI,
-                    address: CONTRACT_ADDRESS,
+                    address: contractAddress,
                     functionName: 'ownerOf',
                     args: [id],
                 }) as const,

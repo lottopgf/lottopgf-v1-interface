@@ -1,5 +1,3 @@
-'use client'
-
 import type { TicketPurchaseFields } from '@/components/TicketPurchase'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,20 +10,23 @@ import { ErrorMessage } from '@hookform/error-message'
 import { DicesIcon, GiftIcon, Trash2Icon } from 'lucide-react'
 import { useState } from 'react'
 import { Controller, useController, useFormState, type Control } from 'react-hook-form'
+import { Address } from 'viem'
 
 export function NumberPicker({
+    contractAddress,
     index,
     control,
     name,
     onRemove,
 }: {
+    contractAddress: Address
     index: number
     control: Control<TicketPurchaseFields>
     name: `tickets.${number}`
     onRemove?: (index: number) => void
 }) {
     const [recipientVisible, setRecipientVisible] = useState(false)
-    const { pickLength, maxBallValue } = useGameConfig()
+    const { pickLength, maxBallValue } = useGameConfig(contractAddress)
 
     const { errors } = useFormState({ control, name })
 

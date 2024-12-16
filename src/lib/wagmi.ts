@@ -1,5 +1,5 @@
-import { METADATA } from '@/config'
 import { getDefaultConfig } from '@rainbow-me/rainbowkit'
+import { metaMaskWallet, injectedWallet } from '@rainbow-me/rainbowkit/wallets'
 import { createClient, fallback, webSocket } from 'viem'
 import { mainnet } from 'viem/chains'
 import { base, scroll } from 'wagmi/chains'
@@ -12,20 +12,26 @@ export function getChain(chainId?: number) {
 }
 
 export const wagmiConfig = getDefaultConfig({
-    appName: METADATA.name,
-    appDescription: METADATA.description,
-    appUrl: METADATA.url,
-    appIcon: METADATA.icon,
+    appName: 'LottoPGF v1',
+    appDescription: 'LottoPGF v1 interface',
+    appUrl: 'https://create.lottopgf.com',
+    /** TODO: appIcon */
     chains,
     projectId: 'fuck_walletconnect',
     ssr: true,
     transports: {
         [scroll.id]: fallback([webSocket(), http()]),
-        [base.id]: fallback([webSocket(), http()]),
+        [base.id]: fallback([http('https://mainnet.base.org')]),
     } satisfies Record<SupportedChainId, Transport>,
     storage: createStorage({
         storage: cookieStorage,
     }),
+    wallets: [
+        {
+            groupName: 'Default',
+            wallets: [metaMaskWallet, injectedWallet],
+        },
+    ],
 })
 
 export const ensConfig = createConfig({

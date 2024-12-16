@@ -22,7 +22,11 @@ export interface LotteryProps {
 export function Lottery({ chainId, address }: LotteryProps) {
     const selectedChainId = useChainId()
     const { gameState, gameId, refetch: refetchCurrentGame } = useCurrentGame(address)
-    const { isActive, refetch: refetchGameData, roundHasEnded } = useGameData({ gameId })
+    const {
+        isActive,
+        refetch: refetchGameData,
+        roundHasEnded,
+    } = useGameData({ contractAddress: address, gameId })
 
     if (selectedChainId !== chainId) {
         return <div>Switch to {chainId} to view this lottery</div>
@@ -46,6 +50,7 @@ export function Lottery({ chainId, address }: LotteryProps) {
 
                 {roundHasEnded && (
                     <RoundEndAlert
+                        contractAddress={address}
                         gameState={gameState}
                         onDraw={() => {
                             refetchCurrentGame()
@@ -56,7 +61,7 @@ export function Lottery({ chainId, address }: LotteryProps) {
                     />
                 )}
 
-                {gameId !== 0n && <WinnerAlert gameId={gameId - 1n} />}
+                {gameId !== 0n && <WinnerAlert contractAddress={address} gameId={gameId - 1n} />}
 
                 <ErrorBoundary fallback={<p>Error fetching lottery stats…</p>}>
                     <Suspense fallback={<LotteryStatsSkeleton />}>

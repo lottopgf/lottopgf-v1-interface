@@ -17,6 +17,7 @@ export function Tickets({ contractAddress, gameId }: { contractAddress: Address;
     const { address } = useAccount()
     const { tickets, hasWon, refetch } = useTicketsWithClaimStatus({
         address,
+        contractAddress,
         gameId,
     })
 
@@ -102,6 +103,7 @@ export function Tickets({ contractAddress, gameId }: { contractAddress: Address;
                                             <p className="text-muted-foreground">Claimed</p>
                                         ) : ticket.claimStatus.isWinner ? (
                                             <TicketClaimButton
+                                                contractAddress={contractAddress}
                                                 tokenId={BigInt(ticket.tokenId)}
                                                 onClaim={() => refetch()}
                                             />
@@ -152,18 +154,22 @@ function TicketSkeleton() {
 }
 
 function useTicketsWithClaimStatus({
+    contractAddress,
     address,
     gameId,
 }: {
+    contractAddress: Address
     address: Address | undefined
     gameId: bigint
 }) {
     const { tickets } = useTickets({
+        contractAddress,
         address,
         gameId,
     })
 
     const { claimStatuses, refetch } = useTicketClaimStatuses({
+        contractAddress,
         gameId,
         ticketIds: tickets?.map((ticket) => BigInt(ticket.tokenId)) ?? [],
         address,

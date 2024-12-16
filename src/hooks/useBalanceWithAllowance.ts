@@ -1,26 +1,33 @@
-import { CHAIN, CONTRACT_ADDRESS, PRIZE_TOKEN_IS_NATIVE } from '@/config'
 import { extractErrorMessages, handleTransactionError } from '@/lib/error'
 import { useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { erc20Abi, type Address } from 'viem'
 import {
     useBalance,
+    useChainId,
     usePublicClient,
     useReadContracts,
     useWaitForTransactionReceipt,
     useWriteContract,
 } from 'wagmi'
+import { useGameConfig } from './useGameConfig'
+import { getChain } from '@/lib/wagmi'
 
 export function useBalanceWithAllowance({
+    contractAddress,
     address,
     token,
     onAllowanceUpdated,
 }: {
+    contractAddress: Address
     address?: Address
     token?: Address
     onAllowanceUpdated?: () => void
 }) {
+    const { isPrizeTokenNative } = useGameConfig(contractAddress)
     const client = usePublicClient()
+    const chainId = useChainId()
+    const chain = getChain(chainId)
     const { data: tokenBalanceData, refetch } = useReadContracts({
         allowFailure: false,
         contracts: [
@@ -34,10 +41,10 @@ export function useBalanceWithAllowance({
                 abi: erc20Abi,
                 address: token,
                 functionName: 'allowance',
-                args: [address!, CONTRACT_ADDRESS],
+                args: [address!, contractAddress],
             },
         ],
-        query: { enabled: !PRIZE_TOKEN_IS_NATIVE && !!address },
+        query: { enabled: !isPrizeTokenNative && !!address },
     })
 
     const { writeContractAsync } = useWriteContract()
@@ -52,12 +59,12 @@ export function useBalanceWithAllowance({
 
             try {
                 const hash = await writeContractAsync({
-                    chain: CHAIN,
+                    chain,
                     type: 'eip1559',
                     abi: erc20Abi,
                     address: token,
                     functionName: 'approve',
-                    args: [CONTRACT_ADDRESS, amount],
+                    args: [contractAddress, amount],
                 })
 
                 toast.promise(async () => client?.waitForTransactionReceipt({ hash }), {
@@ -66,7 +73,7 @@ export function useBalanceWithAllowance({
                         label: 'Explorer',
                         onClick(e) {
                             e.preventDefault()
-                            window.open(`${CHAIN.blockExplorers.default.url}/tx/${hash}`, '_blank')
+                            window.open(`${chain?.blockExplorers.default.url}/tx/${hash}`, '_blank')
                         },
                     },
                     success: 'Allowance updated successfully',
@@ -95,7 +102,7 @@ export function useBalanceWithAllowance({
 
     const [tokenBalance, allowance] = tokenBalanceData ?? []
 
-    const balance = (PRIZE_TOKEN_IS_NATIVE ? nativeBalanceData?.value : tokenBalance) ?? 0n
+    const balance = (isPrizeTokenNative ? nativeBalanceData?.value : tokenBalance) ?? 0n
 
     return {
         balance,

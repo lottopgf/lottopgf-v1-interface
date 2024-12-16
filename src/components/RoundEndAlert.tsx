@@ -3,13 +3,12 @@
 import { LOOTERY_ABI } from '@/abi/Lootery'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { CONTRACT_ADDRESS } from '@/config'
 import { GameState } from '@/hooks/useCurrentGame'
 import { extractErrorMessages, handleTransactionError } from '@/lib/error'
 import { AlertTriangleIcon, Loader2Icon } from 'lucide-react'
 import { useEffect } from 'react'
 import { toast } from 'sonner'
-import { encodeFunctionData, hexToBigInt, type Hex } from 'viem'
+import { Address, encodeFunctionData, hexToBigInt, type Hex } from 'viem'
 import { simulateContract } from 'viem/actions'
 import {
     useAccount,
@@ -22,10 +21,12 @@ import {
 import { getChain } from '@/lib/wagmi'
 
 export function RoundEndAlert({
+    contractAddress,
     gameState,
     onDraw,
     onGameFinalized,
 }: {
+    contractAddress: Address
     gameState: GameState
     onDraw?: () => void
     onGameFinalized?: () => void
@@ -46,7 +47,7 @@ export function RoundEndAlert({
             toast.promise(
                 new Promise<{ hash: Hex; numbers: readonly number[] }>((resolve, reject) => {
                     client?.watchContractEvent({
-                        address: CONTRACT_ADDRESS,
+                        address: contractAddress,
                         abi: LOOTERY_ABI,
                         eventName: 'GameFinalised',
                         onLogs(logs) {
@@ -93,7 +94,7 @@ export function RoundEndAlert({
     const isDrawing = gameState === GameState.DrawPending
 
     useWatchContractEvent({
-        address: CONTRACT_ADDRESS,
+        address: contractAddress,
         abi: LOOTERY_ABI,
         eventName: 'GameFinalised',
         onLogs(logs) {
@@ -117,7 +118,7 @@ export function RoundEndAlert({
 
             // give me ethers or give me death
             const { data: _requestPrice } = await client.call({
-                to: CONTRACT_ADDRESS,
+                to: contractAddress,
                 data: encodeFunctionData({
                     abi: LOOTERY_ABI,
                     functionName: 'getRequestPrice',
@@ -133,14 +134,14 @@ export function RoundEndAlert({
             const response = await simulateContract(client, {
                 chain,
                 abi: LOOTERY_ABI,
-                address: CONTRACT_ADDRESS,
+                address: contractAddress,
                 functionName: 'draw',
                 value: valueToSend,
             })
 
-            // Set a minimum gas limit of 200,000
+            // Set a minimum gas limit of 300,000
             response.request.gas =
-                (response.request.gas ?? 0n) < 200000n ? 200000n : response.request.gas
+                (response.request.gas ?? 0n) < 300000n ? 300000n : response.request.gas
 
             const hash = await writeContractAsync(response.request)
 

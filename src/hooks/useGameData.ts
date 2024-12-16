@@ -1,14 +1,16 @@
 import { LOOTERY_ABI } from '@/abi/Lootery'
-import { CONTRACT_ADDRESS } from '@/config'
 import { getNowInSeconds } from '@/lib/time'
 import { useSuspenseQuery } from '@tanstack/react-query'
+import { Address } from 'viem'
 import { useConfig } from 'wagmi'
 import { readContractsQueryOptions } from 'wagmi/query'
 
 export function useGameData({
+    contractAddress,
     gameId,
     refetchInterval,
 }: {
+    contractAddress: Address
     gameId: bigint
     refetchInterval?: number
 }) {
@@ -17,33 +19,33 @@ export function useGameData({
         contracts: [
             {
                 abi: LOOTERY_ABI,
-                address: CONTRACT_ADDRESS,
+                address: contractAddress,
                 functionName: 'jackpot',
             },
             {
                 abi: LOOTERY_ABI,
-                address: CONTRACT_ADDRESS,
+                address: contractAddress,
                 functionName: 'isApocalypseMode',
             },
             {
                 abi: LOOTERY_ABI,
-                address: CONTRACT_ADDRESS,
+                address: contractAddress,
                 functionName: 'isGameActive',
             },
             {
                 abi: LOOTERY_ABI,
-                address: CONTRACT_ADDRESS,
+                address: contractAddress,
                 functionName: 'gamePeriod',
             },
             {
                 abi: LOOTERY_ABI,
-                address: CONTRACT_ADDRESS,
+                address: contractAddress,
                 functionName: 'gameData',
                 args: [gameId],
             },
             {
                 abi: LOOTERY_ABI,
-                address: CONTRACT_ADDRESS,
+                address: contractAddress,
                 functionName: 'accruedCommunityFees',
             },
         ] as const,
