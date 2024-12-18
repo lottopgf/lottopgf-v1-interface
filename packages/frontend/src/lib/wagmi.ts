@@ -1,6 +1,6 @@
 import { getDefaultConfig } from '@rainbow-me/rainbowkit'
 import { metaMaskWallet, injectedWallet } from '@rainbow-me/rainbowkit/wallets'
-import { createClient, fallback, webSocket } from 'viem'
+import { createClient, fallback } from 'viem'
 import { mainnet } from 'viem/chains'
 import { base, scroll } from 'wagmi/chains'
 import { cookieStorage, createConfig, createStorage, http, Transport } from 'wagmi'
@@ -20,8 +20,8 @@ export const wagmiConfig = getDefaultConfig({
     projectId: 'fuck_walletconnect',
     ssr: true,
     transports: {
-        [scroll.id]: fallback([webSocket(), http()]),
         [base.id]: fallback([http('https://mainnet.base.org')]),
+        [scroll.id]: fallback([http('https://rpc.scroll.io')]),
     } satisfies Record<SupportedChainId, Transport>,
     storage: createStorage({
         storage: cookieStorage,

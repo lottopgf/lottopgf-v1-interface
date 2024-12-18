@@ -1,4 +1,4 @@
-import { EthereumAddressSchema } from '@/lib/schemas'
+import { EthereumAddressSchema } from '@common/EthereumAddressSchema'
 import { Lottery } from '@/pages/Lottery'
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'

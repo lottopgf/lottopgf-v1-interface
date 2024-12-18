@@ -10,9 +10,12 @@ import {
     FormMessage,
 } from '@/components/ui/form'
 import z from 'zod'
-import { formatUnits, getAddress, isAddress } from 'viem'
+import { formatUnits, getAddress, isAddress, isAddressEqual } from 'viem'
 import { useERC20 } from '../hooks/useERC20'
-import { useCreateLootery } from '../hooks/useCreateLootery'
+import {
+    FullBeneficiaryInfo,
+    useCreateLooteryWithMetadata,
+} from '../hooks/useCreateLooteryWithMetadata'
 import { useChainId } from 'wagmi'
 import { chains } from '@/lib/wagmi'
 import { Button } from '@/components/ui/button'
@@ -20,23 +23,29 @@ import { Input } from '@/components/ui/input'
 import { Slider } from '@/components/ui/slider'
 import { Loader2Icon } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
-
-const AddressSchema = z
-    .string()
-    .refine((arg: string): arg is `0x${string}` => isAddress(arg), 'Invalid address')
-    .transform((arg) => getAddress(arg))
+import { useState } from 'react'
+import { EthereumAddressSchema } from '@common/EthereumAddressSchema'
+import { Textarea } from '@/components/ui/textarea'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 const DeployFormSchema = z.object({
     title: z.string().min(1, 'Title is required'),
     symbol: z.string().min(1, 'Symbol is required'),
     duration: z.coerce.number().min(600, 'Minimum 10 minutes'),
     communityFeeBps: z.coerce.number(),
-    prizeTokenAddress: AddressSchema,
+    prizeTokenAddress: EthereumAddressSchema,
     pickLength: z.coerce.number(),
     maxBallValue: z.coerce.number(),
     ticketPrice: z.coerce.bigint(),
     seedJackpotDelay: z.coerce.bigint(),
     seedJackpotMinValue: z.coerce.bigint(),
+})
+
+const NewBeneficiaryFormSchema = z.object({
+    address: EthereumAddressSchema,
+    name: z.string().min(1, 'Name is required'),
+    description: z.string(),
+    goal: z.coerce.bigint(),
 })
 
 export function Deploy() {
@@ -58,11 +67,24 @@ export function Deploy() {
 
     const { symbol: prizeTokenSymbol } = useERC20(form.watch('prizeTokenAddress'))
 
+    // Ephemeral state for adding beneficiaries
+    const [beneficiaries, setBeneficiaries] = useState<FullBeneficiaryInfo[]>([])
+    const [isAddingBeneficiary, setIsAddingBeneficiary] = useState(false)
+    const newBeneficiaryForm = useForm<z.infer<typeof NewBeneficiaryFormSchema>>({
+        resolver: zodResolver(NewBeneficiaryFormSchema),
+        defaultValues: {
+            address: '' as `0x${string}`,
+            name: '',
+            description: '',
+            goal: 1n,
+        },
+    })
+
     const {
         write: createLootery,
         status: createLooteryStatus,
         looteryLaunchedEvent,
-    } = useCreateLootery()
+    } = useCreateLooteryWithMetadata()
 
     const launch = async (values: z.infer<typeof DeployFormSchema>) => {
         if (!createLootery) return
@@ -77,6 +99,17 @@ export function Deploy() {
             values.prizeTokenAddress,
             BigInt(values.seedJackpotDelay),
             BigInt(values.seedJackpotMinValue),
+            beneficiaries,
+            {
+                version: '1.0.0',
+                title: values.title,
+                description: '',
+                longDescription: '',
+                bannerImage: '',
+                icon: '',
+                logo: '',
+                url: '',
+            },
         )
     }
 
@@ -351,6 +384,175 @@ export function Deploy() {
                         </div>
                     </div>
 
+                    {/* Beneficiaries */}
+                    <div className="flex flex-col space-y-4 mt-8">
+                        <h2 className="text-2xl">Add causes to fund with the lottery</h2>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>{form.getValues('title') || 'Main fund'}</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-sm text-muted-foreground">
+                                    This is the default beneficiary and the proceeds will be stored
+                                    in the deployed lottery contract.
+                                </p>
+                            </CardContent>
+                        </Card>
+
+                        {/* Other beneficiaries */}
+                        <div className="grid grid-cols-2 gap-4">
+                            {beneficiaries.map((beneficiary) => (
+                                <Card key={beneficiary.address}>
+                                    <CardHeader>
+                                        <CardTitle className="text-lg underline decoration-dotted">
+                                            <a
+                                                href={
+                                                    new URL(
+                                                        `/address/${beneficiary.address}`,
+                                                        chain?.blockExplorers.default.url,
+                                                    ).href
+                                                }
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >
+                                                {beneficiary.name}
+                                            </a>
+                                        </CardTitle>
+                                        {beneficiary.description && (
+                                            <CardDescription>
+                                                {beneficiary.description}
+                                            </CardDescription>
+                                        )}
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-muted-foreground">
+                                            {beneficiary.goal} {prizeTokenSymbol} goal
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                            {!isAddingBeneficiary ? (
+                                <Button
+                                    variant="ghost"
+                                    className="w-full"
+                                    onClick={() => setIsAddingBeneficiary(true)}
+                                >
+                                    + Add another cause
+                                </Button>
+                            ) : (
+                                <Card>
+                                    <CardContent>
+                                        <div className="mt-4 space-y-4">
+                                            <div className="space-y-2">
+                                                <FormField
+                                                    control={newBeneficiaryForm.control}
+                                                    name="address"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel className="text-sm font-medium">
+                                                                Beneficiary address
+                                                            </FormLabel>
+                                                            <FormControl>
+                                                                <Input
+                                                                    {...field}
+                                                                    placeholder="0x0000000000000000000000000000000000000000"
+                                                                />
+                                                            </FormControl>
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={newBeneficiaryForm.control}
+                                                    name="name"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel className="text-sm font-medium">
+                                                                Cause title
+                                                            </FormLabel>
+                                                            <FormControl>
+                                                                <Input {...field} />
+                                                            </FormControl>
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={newBeneficiaryForm.control}
+                                                    name="description"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel className="text-sm font-medium">
+                                                                Description
+                                                            </FormLabel>
+                                                            <FormControl>
+                                                                <Textarea {...field} />
+                                                            </FormControl>
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={newBeneficiaryForm.control}
+                                                    name="goal"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel className="text-sm font-medium">
+                                                                Goal
+                                                            </FormLabel>
+                                                            <FormControl>
+                                                                <Input
+                                                                    {...field}
+                                                                    type="number"
+                                                                    value={
+                                                                        field.value?.toString() ||
+                                                                        ''
+                                                                    }
+                                                                />
+                                                            </FormControl>
+                                                            <FormDescription>
+                                                                {field.value &&
+                                                                    prizeTokenSymbol &&
+                                                                    `(${formatUnits(field.value, 18)} ${prizeTokenSymbol})`}
+                                                            </FormDescription>
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
+                                            <Button
+                                                type="submit"
+                                                variant="outline"
+                                                className="w-full"
+                                                disabled={
+                                                    !newBeneficiaryForm.formState.isValid ||
+                                                    beneficiaries.some((beneficiary) =>
+                                                        isAddressEqual(
+                                                            beneficiary.address,
+                                                            newBeneficiaryForm.getValues('address'),
+                                                        ),
+                                                    )
+                                                }
+                                                onClick={() => {
+                                                    setBeneficiaries([
+                                                        ...beneficiaries,
+                                                        {
+                                                            ...newBeneficiaryForm.getValues(),
+                                                            goal: newBeneficiaryForm
+                                                                .getValues('goal')
+                                                                .toString() as `${number}`,
+                                                        },
+                                                    ])
+                                                    setIsAddingBeneficiary(false)
+                                                    newBeneficiaryForm.reset()
+                                                }}
+                                            >
+                                                Confirm
+                                            </Button>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )}
+                        </div>
+                    </div>
+
                     <div className="w-full">
                         <h1 className="text-4xl font-normal mt-16">Let's fund public goods 🫡</h1>
                     </div>
@@ -359,7 +561,6 @@ export function Deploy() {
                         type="submit"
                         className="mt-4"
                         size="lg"
-                        onClick={form.handleSubmit(launch)}
                         disabled={createLooteryStatus === 'success'}
                     >
                         {createLooteryStatus === 'pending' ? (
