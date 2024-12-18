@@ -27,6 +27,11 @@ import { useState } from 'react'
 import { EthereumAddressSchema } from '@common/EthereumAddressSchema'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { LottoPGFMetadataV1Schema } from '@common/metadata'
+import { viaIpfsGateway } from '@/lib/viaIpfsGateway'
+
+// Omit some stuff for the metadata form
+const { version, title, beneficiaries, ...MetadataFormSchema } = LottoPGFMetadataV1Schema.shape
 
 const DeployFormSchema = z.object({
     title: z.string().min(1, 'Title is required'),
@@ -39,6 +44,8 @@ const DeployFormSchema = z.object({
     ticketPrice: z.coerce.bigint(),
     seedJackpotDelay: z.coerce.bigint(),
     seedJackpotMinValue: z.coerce.bigint(),
+    // Metadata-related fields
+    ...MetadataFormSchema,
 })
 
 const NewBeneficiaryFormSchema = z.object({
@@ -62,6 +69,16 @@ export function Deploy() {
             ticketPrice: 10n ** 18n,
             seedJackpotDelay: 600n,
             seedJackpotMinValue: 10n ** 18n,
+
+            // Metadata-related fields
+            description: '',
+            /** Not yet used: Long description of the lottery */
+            // longDescription: z.string().max(8192).optional(),
+            /** Not yet used: Canonical app URL */
+            // url: 'https://',
+            icon: 'ipfs://QmUnM2FTUxfQvKT9T5o6GDDfVBzeWGQBB1oVPrndZeZ4Ya',
+            logo: 'ipfs://QmVRDAzuZ63P9hVyv1MGFdUhuqDF23mhEWWyu5wkCa4ejh',
+            bannerImage: 'ipfs://QmYyM5oUycHo8XP8YnD5dJ5JpAVjHdzbxfENJZjmh6vx8L',
         },
     })
 
@@ -83,6 +100,7 @@ export function Deploy() {
     const {
         write: createLootery,
         status: createLooteryStatus,
+        uploadMetadataStatus,
         looteryLaunchedEvent,
     } = useCreateLooteryWithMetadata()
 
@@ -101,14 +119,15 @@ export function Deploy() {
             BigInt(values.seedJackpotMinValue),
             beneficiaries,
             {
+                /** Metadata */
                 version: '1.0.0',
                 title: values.title,
-                description: '',
-                longDescription: '',
-                bannerImage: '',
-                icon: '',
-                logo: '',
-                url: '',
+                description: values.description,
+                longDescription: values.longDescription,
+                bannerImage: values.bannerImage,
+                icon: values.icon,
+                logo: values.logo,
+                url: values.url,
             },
         )
     }
@@ -166,6 +185,112 @@ export function Deploy() {
                                             The symbol of the lottery, used for NFT tickets
                                         </FormDescription>
                                         <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <FormField
+                                control={form.control}
+                                name="description"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-sm font-medium">
+                                            Lottery description
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Textarea {...field} maxLength={2048} />
+                                        </FormControl>
+                                        <FormDescription>
+                                            Short description of the lottery (
+                                            {field.value?.length || 0}/2048 characters left)
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <FormField
+                                control={form.control}
+                                name="icon"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-sm font-medium">
+                                            Icon URI
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input {...field} />
+                                        </FormControl>
+                                        <FormDescription>
+                                            <div>URI to icon image</div>
+                                            {field.value && (
+                                                <div>
+                                                    <img
+                                                        src={viaIpfsGateway(field.value)}
+                                                        className="my-2w-8 h-8"
+                                                    />
+                                                </div>
+                                            )}
+                                        </FormDescription>
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <FormField
+                                control={form.control}
+                                name="logo"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-sm font-medium">
+                                            Logo URI
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input {...field} />
+                                        </FormControl>
+                                        <FormDescription>
+                                            <div>URI to logo image</div>
+                                            {field.value && (
+                                                <div>
+                                                    <img
+                                                        src={viaIpfsGateway(field.value)}
+                                                        className="my-2 h-8"
+                                                    />
+                                                </div>
+                                            )}
+                                        </FormDescription>
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <FormField
+                                control={form.control}
+                                name="bannerImage"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-sm font-medium">
+                                            Banner image URI
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input {...field} />
+                                        </FormControl>
+                                        <FormDescription>
+                                            <div>URI to banner image</div>
+                                            {field.value && (
+                                                <div>
+                                                    <img
+                                                        src={viaIpfsGateway(field.value)}
+                                                        className="my-2 h-[100%]"
+                                                    />
+                                                </div>
+                                            )}
+                                        </FormDescription>
                                     </FormItem>
                                 )}
                             />
@@ -563,7 +688,7 @@ export function Deploy() {
                         size="lg"
                         disabled={createLooteryStatus === 'success'}
                     >
-                        {createLooteryStatus === 'pending' ? (
+                        {createLooteryStatus === 'pending' || uploadMetadataStatus === 'pending' ? (
                             <>
                                 <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
                                 Launching...

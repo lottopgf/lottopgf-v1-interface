@@ -26,13 +26,13 @@ export const LottoPGFMetadataV1Schema = z.object({
     /** Long description of the lottery */
     longDescription: z.string().max(8192).optional(),
     /** Canonical app URL */
-    url: z.string().max(2048).optional(),
+    url: z.string().url().optional(),
     /** URI to icon image */
-    icon: z.string().max(2048).optional(),
+    icon: z.string().url().optional(),
     /** URI to logo image */
-    logo: z.string().max(2048).optional(),
+    logo: z.string().url().optional(),
     /** URI to banner image */
-    bannerImage: z.string().max(2048).optional(),
+    bannerImage: z.string().url().optional(),
     /** Extended beneficiaries info */
     beneficiaries: z.array(BeneficiaryInfoSchema),
 })

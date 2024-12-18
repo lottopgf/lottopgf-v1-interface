@@ -1,7 +1,7 @@
 import { useWaitForTransactionReceipt, useWriteContract } from 'wagmi'
 import { useLooteryDeploymentHelper } from './useLooteryDeploymentHelper'
 import { parseEventLogs } from 'viem'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import {
     LottoPGFMetadataV1,
     LottoPGFMetadataV1Schema,
@@ -37,6 +37,11 @@ export function useCreateLooteryWithMetadata() {
         return events[0]
     }, [receipt])
 
+    const [uploadMetadataStatus, setUploadMetadataStatus] = useState<
+        'idle' | 'pending' | 'success' | 'error'
+    >('idle')
+    const [uploadMetadataError, setUploadMetadataError] = useState<Error | null>(null)
+
     const write = deploymentHelper
         ? async (
               name: string,
@@ -61,7 +66,18 @@ export function useCreateLooteryWithMetadata() {
                       goal,
                   })),
               })
-              const cid = await uploadMetadata(validatedMetadata)
+
+              setUploadMetadataError(null)
+              setUploadMetadataStatus('pending')
+              let cid: string
+              try {
+                  cid = await uploadMetadata(validatedMetadata)
+                  setUploadMetadataStatus('success')
+              } catch (error: any) {
+                  setUploadMetadataStatus('error')
+                  setUploadMetadataError(error as Error)
+                  throw error
+              }
 
               writeContractAsync({
                   ...deploymentHelper.config,
@@ -97,6 +113,8 @@ export function useCreateLooteryWithMetadata() {
         hash,
         receipt,
         looteryLaunchedEvent,
+        uploadMetadataStatus,
+        uploadMetadataError,
     }
 }
 
@@ -110,7 +128,7 @@ const UploaderEndpointResponseSchema = z.object({
  * @returns The CID of the pinned metadata
  */
 async function uploadMetadata(metadata: LottoPGFMetadataV1): Promise<string> {
-    const response = await fetch(import.meta.env.VITE_IPFS_UPLOADER_URL, {
+    const response = await fetch(import.meta.env.VITE_LOTTOPGF_METADATA_UPLOADER_URL, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -118,7 +136,7 @@ async function uploadMetadata(metadata: LottoPGFMetadataV1): Promise<string> {
         body: JSON.stringify(metadata),
     })
     if (!response.ok) {
-        throw new Error('Failed to upload metadata')
+        throw new Error(`Failed to upload metadata (${response.status})`)
     }
     const { cid } = UploaderEndpointResponseSchema.parse(await response.json())
     return cid
