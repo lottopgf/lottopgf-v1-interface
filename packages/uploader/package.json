@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "node --env-file=.env.local -r ts-node/register -r tsconfig-paths/register src/index.ts",
     "build": "tsc",
-    "start": "node -r ts-node/register/transpile-only -r tsconfig-paths/register dist/index.js"
+    "start": "node -r ts-node/register/transpile-only -r tsconfig-paths/register dist/uploader/src/index.js"
   },
   "devDependencies": {
     "@types/json-stable-stringify": "^1.1.0",
