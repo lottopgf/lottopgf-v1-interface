@@ -1,17 +1,29 @@
 import { Navbar } from '@/components/Navbar'
 import { createRootRoute, Outlet } from '@tanstack/react-router'
-import { TanStackRouterDevtools } from '@tanstack/router-devtools'
+import React, { Suspense } from 'react'
 
 export const Route = createRootRoute({
-    component: () => (
-        <>
-            <Navbar />
-            <div className="flex flex-col space-y-8 w-full max-w-2xl mx-auto">
-                <div className="w-full">
-                    <Outlet />
+    component: () => {
+        const TanStackRouterDevtools = import.meta.env.PROD
+            ? () => null // Render nothing in production
+            : React.lazy(() =>
+                  // Lazy load in development
+                  import('@tanstack/router-devtools').then((res) => ({
+                      default: res.TanStackRouterDevtools,
+                  })),
+              )
+        return (
+            <>
+                <Navbar />
+                <div className="flex flex-col space-y-8 w-full max-w-2xl mx-auto">
+                    <div className="w-full">
+                        <Outlet />
+                    </div>
                 </div>
-            </div>
-            <TanStackRouterDevtools />
-        </>
-    ),
+                <Suspense>
+                    <TanStackRouterDevtools />
+                </Suspense>
+            </>
+        )
+    },
 })
