@@ -8,6 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { WinnerAlert } from '@/components/WinnerAlert'
 import { useCurrentGame } from '@/hooks/useCurrentGame'
 import { useGameData } from '@/hooks/useGameData'
+import { useLottoPGFMetadata } from '@/hooks/useLottoPGFMetadata'
 import { AlertTriangleIcon } from 'lucide-react'
 import { Suspense } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
@@ -27,6 +28,7 @@ export function Lottery({ chainId, address }: LotteryProps) {
         refetch: refetchGameData,
         roundHasEnded,
     } = useGameData({ contractAddress: address, gameId })
+    const { metadata } = useLottoPGFMetadata(chainId, address)
 
     if (selectedChainId !== chainId) {
         return <div>Switch to {chainId} to view this lottery</div>
@@ -36,7 +38,11 @@ export function Lottery({ chainId, address }: LotteryProps) {
         return (
             <div className="mb-4 space-y-14">
                 <div className="space-y-8">
-                    <Banner />
+                    <Banner
+                        name={metadata?.title}
+                        longDescription={metadata?.description}
+                        bannerImage={metadata?.bannerImage}
+                    />
                     <LotteryInactive address={address} />
                 </div>
             </div>
@@ -46,7 +52,11 @@ export function Lottery({ chainId, address }: LotteryProps) {
     return (
         <div className="mb-4 space-y-14">
             <div className="space-y-8">
-                <Banner />
+                <Banner
+                    name={metadata?.title}
+                    longDescription={metadata?.description}
+                    bannerImage={metadata?.bannerImage}
+                />
 
                 {roundHasEnded && (
                     <RoundEndAlert

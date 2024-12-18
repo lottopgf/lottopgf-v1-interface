@@ -12,26 +12,27 @@ import {
 import z from 'zod'
 import { formatUnits, isAddressEqual } from 'viem'
 import { useERC20 } from '../hooks/useERC20'
-import {
-    FullBeneficiaryInfo,
-    useCreateLooteryWithMetadata,
-} from '../hooks/useCreateLooteryWithMetadata'
+import { useCreateLooteryWithMetadata } from '../hooks/useCreateLooteryWithMetadata'
 import { useChainId } from 'wagmi'
 import { chains } from '@/lib/wagmi'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Slider } from '@/components/ui/slider'
-import { Loader2Icon } from 'lucide-react'
+import { Loader2Icon, XIcon } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { EthereumAddressSchema } from '@common/EthereumAddressSchema'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { LottoPGFMetadataV1Schema } from '@common/metadata'
+import { BeneficiaryInfoSchema, LottoPGFMetadataV1Schema } from '@common/metadata'
 import { viaIpfsGateway } from '@/lib/viaIpfsGateway'
 
 // Omit some stuff for the metadata form
 const { version, title, beneficiaries, ...MetadataFormSchema } = LottoPGFMetadataV1Schema.shape
+
+const FullBeneficiaryInfoFormSchema = BeneficiaryInfoSchema.extend({
+    name: z.string().min(1, 'Name is required'),
+})
 
 const DeployFormSchema = z.object({
     title: z.string().min(1, 'Title is required'),
@@ -46,6 +47,8 @@ const DeployFormSchema = z.object({
     seedJackpotMinValue: z.coerce.bigint(),
     // Metadata-related fields
     ...MetadataFormSchema,
+    // Beneficiaries
+    beneficiaries: z.array(FullBeneficiaryInfoFormSchema),
 })
 
 const NewBeneficiaryFormSchema = z.object({
@@ -79,13 +82,17 @@ export function Deploy() {
             icon: 'ipfs://QmUnM2FTUxfQvKT9T5o6GDDfVBzeWGQBB1oVPrndZeZ4Ya',
             logo: 'ipfs://QmVRDAzuZ63P9hVyv1MGFdUhuqDF23mhEWWyu5wkCa4ejh',
             bannerImage: 'ipfs://QmYyM5oUycHo8XP8YnD5dJ5JpAVjHdzbxfENJZjmh6vx8L',
+
+            // Beneficiaries
+            beneficiaries: [],
         },
     })
 
-    const { symbol: prizeTokenSymbol } = useERC20(form.watch('prizeTokenAddress'))
+    const { symbol: prizeTokenSymbol, decimals: prizeTokenDecimals } = useERC20(
+        form.watch('prizeTokenAddress'),
+    )
 
     // Ephemeral state for adding beneficiaries
-    const [beneficiaries, setBeneficiaries] = useState<FullBeneficiaryInfo[]>([])
     const [isAddingBeneficiary, setIsAddingBeneficiary] = useState(false)
     const newBeneficiaryForm = useForm<z.infer<typeof NewBeneficiaryFormSchema>>({
         resolver: zodResolver(NewBeneficiaryFormSchema),
@@ -101,8 +108,11 @@ export function Deploy() {
         write: createLootery,
         status: createLooteryStatus,
         uploadMetadataStatus,
+        uploadMetadataError,
         looteryLaunchedEvent,
     } = useCreateLooteryWithMetadata()
+
+    uploadMetadataError && console.log('uploadMetadataError', uploadMetadataError)
 
     const launch = async (values: z.infer<typeof DeployFormSchema>) => {
         if (!createLootery) return
@@ -117,7 +127,7 @@ export function Deploy() {
             values.prizeTokenAddress,
             BigInt(values.seedJackpotDelay),
             BigInt(values.seedJackpotMinValue),
-            beneficiaries,
+            values.beneficiaries,
             {
                 /** Metadata */
                 version: '1.0.0',
@@ -130,6 +140,7 @@ export function Deploy() {
                 url: values.url,
             },
         )
+        form.reset()
     }
 
     const chainId = useChainId()
@@ -224,17 +235,15 @@ export function Deploy() {
                                         <FormControl>
                                             <Input {...field} />
                                         </FormControl>
-                                        <FormDescription>
-                                            <div>URI to icon image</div>
-                                            {field.value && (
-                                                <div>
-                                                    <img
-                                                        src={viaIpfsGateway(field.value)}
-                                                        className="my-2w-8 h-8"
-                                                    />
-                                                </div>
-                                            )}
-                                        </FormDescription>
+                                        <FormDescription>URI to icon image</FormDescription>
+                                        {field.value && (
+                                            <div>
+                                                <img
+                                                    src={viaIpfsGateway(field.value)}
+                                                    className="my-2w-8 h-8"
+                                                />
+                                            </div>
+                                        )}
                                     </FormItem>
                                 )}
                             />
@@ -252,17 +261,15 @@ export function Deploy() {
                                         <FormControl>
                                             <Input {...field} />
                                         </FormControl>
-                                        <FormDescription>
-                                            <div>URI to logo image</div>
-                                            {field.value && (
-                                                <div>
-                                                    <img
-                                                        src={viaIpfsGateway(field.value)}
-                                                        className="my-2 h-8"
-                                                    />
-                                                </div>
-                                            )}
-                                        </FormDescription>
+                                        <FormDescription>URI to logo image</FormDescription>
+                                        {field.value && (
+                                            <div>
+                                                <img
+                                                    src={viaIpfsGateway(field.value)}
+                                                    className="my-2 h-8"
+                                                />
+                                            </div>
+                                        )}
                                     </FormItem>
                                 )}
                             />
@@ -280,17 +287,15 @@ export function Deploy() {
                                         <FormControl>
                                             <Input {...field} />
                                         </FormControl>
-                                        <FormDescription>
-                                            <div>URI to banner image</div>
-                                            {field.value && (
-                                                <div>
-                                                    <img
-                                                        src={viaIpfsGateway(field.value)}
-                                                        className="my-2 h-[100%]"
-                                                    />
-                                                </div>
-                                            )}
-                                        </FormDescription>
+                                        <FormDescription>URI to banner image</FormDescription>
+                                        {field.value && (
+                                            <div>
+                                                <img
+                                                    src={viaIpfsGateway(field.value)}
+                                                    className="my-2 h-[100%]"
+                                                />
+                                            </div>
+                                        )}
                                     </FormItem>
                                 )}
                             />
@@ -500,7 +505,8 @@ export function Deploy() {
                                             The price of a ticket, in the prize token's decimals.{' '}
                                             {field.value &&
                                                 prizeTokenSymbol &&
-                                                `(${formatUnits(field.value, 18)} ${prizeTokenSymbol})`}
+                                                prizeTokenDecimals &&
+                                                `(${formatUnits(field.value, prizeTokenDecimals)} ${prizeTokenSymbol})`}
                                         </FormDescription>
                                         <FormMessage />
                                     </FormItem>
@@ -527,9 +533,9 @@ export function Deploy() {
 
                         {/* Other beneficiaries */}
                         <div className="grid grid-cols-2 gap-4">
-                            {beneficiaries.map((beneficiary) => (
+                            {form.getValues('beneficiaries').map((beneficiary) => (
                                 <Card key={beneficiary.address}>
-                                    <CardHeader>
+                                    <CardHeader className="relative">
                                         <CardTitle className="text-lg underline decoration-dotted">
                                             <a
                                                 href={
@@ -549,10 +555,36 @@ export function Deploy() {
                                                 {beneficiary.description}
                                             </CardDescription>
                                         )}
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="absolute top-2 right-2"
+                                            onClick={() => {
+                                                form.setValue(
+                                                    'beneficiaries',
+                                                    form
+                                                        .getValues('beneficiaries')
+                                                        .filter(
+                                                            (b) =>
+                                                                !isAddressEqual(
+                                                                    b.address,
+                                                                    beneficiary.address,
+                                                                ),
+                                                        ),
+                                                )
+                                            }}
+                                        >
+                                            <XIcon className="h-4 w-4" />
+                                        </Button>
                                     </CardHeader>
                                     <CardContent>
                                         <div className="text-muted-foreground">
-                                            {beneficiary.goal} {prizeTokenSymbol} goal
+                                            {prizeTokenDecimals &&
+                                                formatUnits(
+                                                    BigInt(beneficiary.goal),
+                                                    prizeTokenDecimals,
+                                                )}{' '}
+                                            {prizeTokenSymbol} goal
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -636,7 +668,8 @@ export function Deploy() {
                                                             <FormDescription>
                                                                 {field.value &&
                                                                     prizeTokenSymbol &&
-                                                                    `(${formatUnits(field.value, 18)} ${prizeTokenSymbol})`}
+                                                                    prizeTokenDecimals &&
+                                                                    `(${formatUnits(field.value, prizeTokenDecimals)} ${prizeTokenSymbol})`}
                                                             </FormDescription>
                                                         </FormItem>
                                                     )}
@@ -648,23 +681,33 @@ export function Deploy() {
                                                 className="w-full"
                                                 disabled={
                                                     !newBeneficiaryForm.formState.isValid ||
-                                                    beneficiaries.some((beneficiary) =>
-                                                        isAddressEqual(
-                                                            beneficiary.address,
-                                                            newBeneficiaryForm.getValues('address'),
-                                                        ),
-                                                    )
+                                                    form
+                                                        .getValues('beneficiaries')
+                                                        .some((beneficiary) =>
+                                                            isAddressEqual(
+                                                                beneficiary.address,
+                                                                newBeneficiaryForm.getValues(
+                                                                    'address',
+                                                                ),
+                                                            ),
+                                                        )
                                                 }
                                                 onClick={() => {
-                                                    setBeneficiaries([
-                                                        ...beneficiaries,
+                                                    form.setValue(
+                                                        'beneficiaries',
+                                                        [
+                                                            ...form.getValues('beneficiaries'),
+                                                            {
+                                                                ...newBeneficiaryForm.getValues(),
+                                                                goal: newBeneficiaryForm
+                                                                    .getValues('goal')
+                                                                    .toString() as `${number}`,
+                                                            },
+                                                        ],
                                                         {
-                                                            ...newBeneficiaryForm.getValues(),
-                                                            goal: newBeneficiaryForm
-                                                                .getValues('goal')
-                                                                .toString() as `${number}`,
+                                                            shouldValidate: true,
                                                         },
-                                                    ])
+                                                    )
                                                     setIsAddingBeneficiary(false)
                                                     newBeneficiaryForm.reset()
                                                 }}

@@ -22,6 +22,7 @@ import { GameState, useCurrentGame } from '@/hooks/useCurrentGame'
 import { useERC20 } from '@/hooks/useERC20'
 import { useGameConfig } from '@/hooks/useGameConfig'
 import { useGameData } from '@/hooks/useGameData'
+import { useLottoPGFMetadata } from '@/hooks/useLottoPGFMetadata'
 import { useTickets } from '@/hooks/useTickets'
 import { makeBridgeUrl } from '@/lib/bridge'
 import { extractErrorMessages, handleTransactionError } from '@/lib/error'
@@ -174,6 +175,8 @@ export function TicketPurchase({
         onPurchase?.()
     }
 
+    const { metadata } = useLottoPGFMetadata(chainId, contractAddress)
+
     async function onSubmit(fields: TicketPurchaseFields) {
         if (!address || !fields.tickets.length) return
 
@@ -324,22 +327,21 @@ export function TicketPurchase({
                                 </div>
                             </CardHeader>
                         </Card>
-                        {/** TODO(metadata) */}
-                        {/* {FUNDRAISERS.map((fundraiser, i) => {
-                            const isActive = isAddressEqual(fundraiser.address, recipient)
+                        {metadata?.beneficiaries.map((beneficiary) => {
+                            const isActive = isAddressEqual(beneficiary.address, recipient)
                             return (
                                 <FundraiserCard
-                                    key={i}
+                                    key={beneficiary.address}
                                     contractAddress={contractAddress}
-                                    title={fundraiser.title}
-                                    description={fundraiser.description}
-                                    targetAmount={fundraiser.targetAmount}
-                                    address={fundraiser.address}
+                                    title={beneficiary.name}
+                                    description={beneficiary.description}
+                                    targetAmount={BigInt(beneficiary.goal)}
+                                    address={beneficiary.address}
                                     isActive={isActive}
-                                    onClick={() => setValue('recipient', fundraiser.address)}
+                                    onClick={() => setValue('recipient', beneficiary.address)}
                                 />
                             )
-                        })} */}
+                        })}
                     </div>
                 </section>
 
@@ -452,7 +454,7 @@ export function TicketPurchase({
                                                         value={totalPrice}
                                                         decimals={prizeTokenDecimals}
                                                     />
-                                                )}
+                                                )}{' '}
                                                 {prizeTokenSymbol}
                                             </p>
                                             <p className="text-sm text-muted-foreground">
@@ -462,7 +464,7 @@ export function TicketPurchase({
                                                         value={balance}
                                                         decimals={prizeTokenDecimals}
                                                     />
-                                                )}
+                                                )}{' '}
                                                 {prizeTokenSymbol}
                                             </p>
                                         </div>

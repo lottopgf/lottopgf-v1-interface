@@ -1,4 +1,4 @@
-import { useWaitForTransactionReceipt, useWriteContract } from 'wagmi'
+import { useChainId, useWaitForTransactionReceipt, useWriteContract } from 'wagmi'
 import { useLooteryDeploymentHelper } from './useLooteryDeploymentHelper'
 import { parseEventLogs } from 'viem'
 import { useMemo, useState } from 'react'
@@ -17,7 +17,8 @@ export type FullBeneficiaryInfo = BeneficiaryInfo & {
 
 export function useCreateLooteryWithMetadata() {
     const { writeContractAsync, reset, status, error, data: hash } = useWriteContract()
-    const deploymentHelper = useLooteryDeploymentHelper()
+    const chainId = useChainId()
+    const deploymentHelper = useLooteryDeploymentHelper(chainId)
 
     const { data: receipt } = useWaitForTransactionReceipt({
         hash,
@@ -79,7 +80,7 @@ export function useCreateLooteryWithMetadata() {
                   throw error
               }
 
-              writeContractAsync({
+              return writeContractAsync({
                   ...deploymentHelper.config,
                   functionName: 'deployLooteryWithMetadata',
                   args: [

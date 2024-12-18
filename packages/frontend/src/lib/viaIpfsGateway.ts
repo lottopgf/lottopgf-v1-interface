@@ -3,12 +3,7 @@ import * as isIpfs from 'is-ipfs'
 /**
  * Public IPFS gateways to try
  */
-const PUBLIC_GATEWAYS = [
-    'https://dweb.link',
-    'https://flk-ipfs.xyz',
-    'https://ipfs.cyou',
-    'https://w3s.link',
-]
+const PUBLIC_GATEWAYS = ['https://dweb.link', 'https://flk-ipfs.xyz', 'https://w3s.link']
 
 let roundRobinIndex = 0
 

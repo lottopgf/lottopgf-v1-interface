@@ -1,5 +1,5 @@
 import { base, scroll } from 'viem/chains'
-import { useChainId, useReadContract } from 'wagmi'
+import { useReadContract } from 'wagmi'
 import { LOOTERY_DEPLOYMENT_HELPER_ABI } from '../abi/LooteryDeploymentHelper'
 
 const deploymentHelpers: Record<number, `0x${string}`> = {
@@ -7,9 +7,7 @@ const deploymentHelpers: Record<number, `0x${string}`> = {
     [scroll.id]: '0x171A53E7AB7da344845E706DDF7D0F67Eb1C9213',
 }
 
-export function useLooteryDeploymentHelper() {
-    const chainId = useChainId()
-
+export function useLooteryDeploymentHelper(chainId: number) {
     const deploymentHelperAddress = deploymentHelpers[chainId]
     if (!deploymentHelperAddress) {
         return undefined
