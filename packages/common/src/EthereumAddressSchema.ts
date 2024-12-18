@@ -1,17 +1,9 @@
 import { z } from 'zod'
-import { type Address, getAddress } from 'viem'
 
 export const EthereumAddressSchema = z
     .string()
     .regex(/^0x[a-fA-F0-9]{40}$/)
-    .refine((arg): arg is Address => {
-        try {
-            getAddress(arg)
-            return true
-        } catch (e) {
-            return false
-        }
-    })
-    .transform((arg) => getAddress(arg))
+    .refine((_arg): _arg is `0x${string}` => true)
+// .transform((arg) => getAddress(arg)) // TODO: Re-add viem, but gotta deal with the ES modules nonsense
 
 export type EthereumAddress = z.infer<typeof EthereumAddressSchema>

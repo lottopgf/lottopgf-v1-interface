@@ -10,7 +10,7 @@ import {
     FormMessage,
 } from '@/components/ui/form'
 import z from 'zod'
-import { formatUnits, getAddress, isAddress, isAddressEqual } from 'viem'
+import { formatUnits, isAddressEqual } from 'viem'
 import { useERC20 } from '../hooks/useERC20'
 import {
     FullBeneficiaryInfo,

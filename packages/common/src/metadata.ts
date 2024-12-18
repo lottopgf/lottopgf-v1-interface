@@ -11,7 +11,7 @@ export const BeneficiaryInfoSchema = z.object({
     goal: z
         .string()
         .regex(/^\d+$/)
-        .refine((val): val is `${number}` => true),
+        .refine((_val): _val is `${number}` => true),
 })
 
 export type BeneficiaryInfo = z.infer<typeof BeneficiaryInfoSchema>
