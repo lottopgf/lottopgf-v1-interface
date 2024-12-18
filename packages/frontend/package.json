@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "yarn tsc -b && yarn vite build",
+    "build": "npx tsc -b && yarn vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "format": "prettier --write .",
