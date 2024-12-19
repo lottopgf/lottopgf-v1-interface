@@ -154,7 +154,7 @@ export function Deploy() {
     return (
         <div className="mb-16">
             <h1 className="text-4xl font-normal mt-16">
-                Launch a permissionless lottery to fund public goods
+                Launch a fundraiser lottery with any token
             </h1>
 
             <Form {...form}>
@@ -198,7 +198,8 @@ export function Deploy() {
                                             <Input placeholder="PWRBLD" {...field} />
                                         </FormControl>
                                         <FormDescription>
-                                            The symbol of the lottery, used for NFT tickets
+                                            The symbol of the lottery, used as an identifier for the
+                                            lottery NFT tickets
                                         </FormDescription>
                                         <FormMessage />
                                     </FormItem>
@@ -240,7 +241,12 @@ export function Deploy() {
                                         <FormControl>
                                             <Input {...field} />
                                         </FormControl>
-                                        <FormDescription>URI to icon image</FormDescription>
+                                        <FormDescription>
+                                            Paste a URI for your icon image (can be a regular URL to
+                                            an image like https://domain/image.png or an IPFS URI
+                                            like ipfs://{'<cid>'}). This will be shown as the
+                                            browser favicon.
+                                        </FormDescription>
                                         {field.value && (
                                             <div>
                                                 <img
@@ -266,7 +272,12 @@ export function Deploy() {
                                         <FormControl>
                                             <Input {...field} />
                                         </FormControl>
-                                        <FormDescription>URI to logo image</FormDescription>
+                                        <FormDescription>
+                                            Paste a URI for your logo image (can be a regular URL to
+                                            an image like https://domain/image.png or an IPFS URI
+                                            like ipfs://{'<cid>'}). This will be shown as the navbar
+                                            logo.
+                                        </FormDescription>
                                         {field.value && (
                                             <div>
                                                 <img
@@ -292,7 +303,12 @@ export function Deploy() {
                                         <FormControl>
                                             <Input {...field} />
                                         </FormControl>
-                                        <FormDescription>URI to banner image</FormDescription>
+                                        <FormDescription>
+                                            Paste a URI for your banner image (can be a regular URL
+                                            to an image like https://domain/image.png or an IPFS URI
+                                            like ipfs://{'<cid>'}). This will be shown as the banner
+                                            image on your ticket purchase page.
+                                        </FormDescription>
                                         {field.value && (
                                             <div>
                                                 <img
