@@ -116,8 +116,6 @@ export function Deploy() {
         looteryLaunchedEvent,
     } = useCreateLooteryWithMetadata()
 
-    uploadMetadataError && console.log('uploadMetadataError', uploadMetadataError)
-
     const launch = async (values: z.infer<typeof DeployFormSchema>) => {
         if (!createLootery) return
         await createLootery(

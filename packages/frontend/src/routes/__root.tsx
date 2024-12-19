@@ -1,4 +1,5 @@
 import { DynamicFavicon } from '@/components/DynamicFavicon'
+import { Footer } from '@/components/Footer'
 import { JuiceboxCampaignBanner } from '@/components/JuiceboxCampaignBanner'
 import { Navbar } from '@/components/Navbar'
 import { createRootRoute, Outlet } from '@tanstack/react-router'
@@ -24,6 +25,7 @@ export const Route = createRootRoute({
                         <Outlet />
                     </div>
                 </div>
+                <Footer />
                 <Suspense>
                     <TanStackRouterDevtools />
                 </Suspense>

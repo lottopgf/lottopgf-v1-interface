@@ -1,5 +1,4 @@
 import { Banner } from '@/components/Banner'
-import { Footer } from '@/components/Footer'
 import { LotteryStats, LotteryStatsSkeleton } from '@/components/LotteryStats'
 import { PreviousTickets } from '@/components/PreviousTickets'
 import { RoundEndAlert } from '@/components/RoundEndAlert'
@@ -88,8 +87,6 @@ export function Lottery({ chainId, address }: LotteryProps) {
                     }}
                 />
             </ErrorBoundary>
-
-            <Footer />
         </div>
     )
 }
