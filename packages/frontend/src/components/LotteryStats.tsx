@@ -8,9 +8,10 @@ import { useTickets } from '@/hooks/useTickets'
 import { Address } from 'viem'
 import type { ReactNode } from 'react'
 import Countdown, { type CountdownRendererFn } from 'react-countdown'
-import { useAccount } from 'wagmi'
+import { useAccount, useChainId } from 'wagmi'
 import { useGameConfig } from '@/hooks/useGameConfig'
 import { useERC20 } from '@/hooks/useERC20'
+import { Link } from '@tanstack/react-router'
 
 const STATS_REFRESH_INTERVAL = 5000
 const SHOW_FUNDS_RAISED = false
@@ -28,6 +29,7 @@ export function LotteryStats({ contractAddress }: { contractAddress: Address }) 
         address,
         gameId,
     })
+    const chainId = useChainId()
 
     const numberOfTickets = tickets?.length ?? 0
 
@@ -147,9 +149,16 @@ export function LotteryStats({ contractAddress }: { contractAddress: Address }) 
                         <CardDescription>Your tickets</CardDescription>
                         <CardTitle className="flex items-end justify-between">
                             <DetailsCardTitle>{numberOfTickets}</DetailsCardTitle>{' '}
-                            <a href="/tickets" className="text-base text-green-500">
+                            <Link
+                                to="/tickets/$chainId/$address"
+                                params={{
+                                    chainId: chainId.toString(),
+                                    address: contractAddress,
+                                }}
+                                className="text-base text-green-500"
+                            >
                                 View your tickets &gt;
-                            </a>
+                            </Link>
                         </CardTitle>
                     </CardHeader>
                 </Card>

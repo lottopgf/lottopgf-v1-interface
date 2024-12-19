@@ -13,6 +13,7 @@
 import { Route as rootRoute } from './routes/__root'
 import { Route as DeployImport } from './routes/deploy'
 import { Route as IndexImport } from './routes/index'
+import { Route as TicketsChainIdAddressImport } from './routes/tickets.$chainId.$address'
 import { Route as LotteryChainIdAddressImport } from './routes/lottery.$chainId.$address'
 
 // Create/Update Routes
@@ -26,6 +27,12 @@ const DeployRoute = DeployImport.update({
 const IndexRoute = IndexImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const TicketsChainIdAddressRoute = TicketsChainIdAddressImport.update({
+  id: '/tickets/$chainId/$address',
+  path: '/tickets/$chainId/$address',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -60,6 +67,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LotteryChainIdAddressImport
       parentRoute: typeof rootRoute
     }
+    '/tickets/$chainId/$address': {
+      id: '/tickets/$chainId/$address'
+      path: '/tickets/$chainId/$address'
+      fullPath: '/tickets/$chainId/$address'
+      preLoaderRoute: typeof TicketsChainIdAddressImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
@@ -69,12 +83,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/deploy': typeof DeployRoute
   '/lottery/$chainId/$address': typeof LotteryChainIdAddressRoute
+  '/tickets/$chainId/$address': typeof TicketsChainIdAddressRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/deploy': typeof DeployRoute
   '/lottery/$chainId/$address': typeof LotteryChainIdAddressRoute
+  '/tickets/$chainId/$address': typeof TicketsChainIdAddressRoute
 }
 
 export interface FileRoutesById {
@@ -82,14 +98,28 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/deploy': typeof DeployRoute
   '/lottery/$chainId/$address': typeof LotteryChainIdAddressRoute
+  '/tickets/$chainId/$address': typeof TicketsChainIdAddressRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/deploy' | '/lottery/$chainId/$address'
+  fullPaths:
+    | '/'
+    | '/deploy'
+    | '/lottery/$chainId/$address'
+    | '/tickets/$chainId/$address'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/deploy' | '/lottery/$chainId/$address'
-  id: '__root__' | '/' | '/deploy' | '/lottery/$chainId/$address'
+  to:
+    | '/'
+    | '/deploy'
+    | '/lottery/$chainId/$address'
+    | '/tickets/$chainId/$address'
+  id:
+    | '__root__'
+    | '/'
+    | '/deploy'
+    | '/lottery/$chainId/$address'
+    | '/tickets/$chainId/$address'
   fileRoutesById: FileRoutesById
 }
 
@@ -97,12 +127,14 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DeployRoute: typeof DeployRoute
   LotteryChainIdAddressRoute: typeof LotteryChainIdAddressRoute
+  TicketsChainIdAddressRoute: typeof TicketsChainIdAddressRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DeployRoute: DeployRoute,
   LotteryChainIdAddressRoute: LotteryChainIdAddressRoute,
+  TicketsChainIdAddressRoute: TicketsChainIdAddressRoute,
 }
 
 export const routeTree = rootRoute
@@ -117,7 +149,8 @@ export const routeTree = rootRoute
       "children": [
         "/",
         "/deploy",
-        "/lottery/$chainId/$address"
+        "/lottery/$chainId/$address",
+        "/tickets/$chainId/$address"
       ]
     },
     "/": {
@@ -128,6 +161,9 @@ export const routeTree = rootRoute
     },
     "/lottery/$chainId/$address": {
       "filePath": "lottery.$chainId.$address.tsx"
+    },
+    "/tickets/$chainId/$address": {
+      "filePath": "tickets.$chainId.$address.tsx"
     }
   }
 }
