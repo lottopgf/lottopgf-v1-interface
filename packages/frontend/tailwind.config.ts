@@ -53,6 +53,10 @@ const config = {
                     DEFAULT: 'hsl(var(--card))',
                     foreground: 'hsl(var(--card-foreground))',
                 },
+                otto: {
+                    DEFAULT: '#16A34A',
+                    dark: '#3A9A1C',
+                },
             },
             borderRadius: {
                 lg: 'var(--radius)',
