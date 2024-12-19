@@ -9,16 +9,16 @@ import { LOOTERY_ABI } from '@/abi/Lootery'
 import { FullBeneficiaryInfo } from './useCreateLooteryWithMetadata'
 import { useMemo } from 'react'
 
-export function useLottoPGFMetadata(chainId: number, address: Address) {
+export function useLottoPGFMetadata(chainId?: number, address?: Address) {
     const deploymentHelper = useLooteryDeploymentHelper(chainId)
     const metadataRegistry = deploymentHelper?.metadataRegistry
     const { data: looteryMetadata } = useReadContract({
         address: metadataRegistry,
         abi: LOTTOPGF_METADATA_REGISTRY_ABI,
         functionName: 'looteryMetadata',
-        args: [address],
+        args: [address!],
         query: {
-            enabled: Boolean(metadataRegistry),
+            enabled: Boolean(metadataRegistry && address),
         },
     })
     const metadataUri = looteryMetadata?.[1]

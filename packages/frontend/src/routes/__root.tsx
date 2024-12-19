@@ -1,3 +1,4 @@
+import { DynamicFavicon } from '@/components/DynamicFavicon'
 import { JuiceboxCampaignBanner } from '@/components/JuiceboxCampaignBanner'
 import { Navbar } from '@/components/Navbar'
 import { createRootRoute, Outlet } from '@tanstack/react-router'
@@ -16,6 +17,7 @@ export const Route = createRootRoute({
         return (
             <>
                 <JuiceboxCampaignBanner />
+                <DynamicFavicon />
                 <Navbar />
                 <div className="flex flex-col space-y-8 w-full max-w-2xl mx-auto">
                     <div className="w-full">

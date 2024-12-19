@@ -7,8 +7,8 @@ const deploymentHelpers: Record<number, `0x${string}`> = {
     [scroll.id]: '0x4A8D55012894a7DbaEFc5c5183Ea7b921bc4a3C1',
 }
 
-export function useLooteryDeploymentHelper(chainId: number) {
-    const deploymentHelperAddress = deploymentHelpers[chainId]
+export function useLooteryDeploymentHelper(chainId?: number) {
+    const deploymentHelperAddress = chainId ? deploymentHelpers[chainId] : undefined
     if (!deploymentHelperAddress) {
         return undefined
     }
