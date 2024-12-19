@@ -19,6 +19,7 @@ import {
     useWriteContract,
 } from 'wagmi'
 import { getChain } from '@/lib/wagmi'
+import { useConnectModal } from '@rainbow-me/rainbowkit'
 
 export function RoundEndAlert({
     contractAddress,
@@ -35,6 +36,7 @@ export function RoundEndAlert({
     const chainId = useChainId()
     const chain = getChain(chainId)
     const { isConnected } = useAccount()
+    const { openConnectModal } = useConnectModal()
 
     const { writeContractAsync, data: hash, isPending: isPendingTransaction } = useWriteContract()
 
@@ -189,7 +191,7 @@ export function RoundEndAlert({
                         Execute
                     </Button>
                 ) : (
-                    <Button className="shrink-0" onClick={() => open()}>
+                    <Button className="shrink-0" onClick={() => openConnectModal?.()}>
                         Connect wallet
                     </Button>
                 )}

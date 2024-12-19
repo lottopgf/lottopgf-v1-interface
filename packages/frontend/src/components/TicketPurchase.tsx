@@ -30,6 +30,7 @@ import { getRandomPicks } from '@/lib/random'
 import { cn } from '@/lib/utils'
 import { getChain } from '@/lib/wagmi'
 import { valibotResolver } from '@hookform/resolvers/valibot'
+import { useConnectModal } from '@rainbow-me/rainbowkit'
 import { CheckIcon, DicesIcon, Loader2Icon, PlusIcon, WalletMinimalIcon } from 'lucide-react'
 import { useRef, type ReactNode } from 'react'
 import { useFieldArray, useForm, useWatch } from 'react-hook-form'
@@ -111,6 +112,7 @@ export function TicketPurchase({
     const chain = getChain(chainId)
     const scrollAreaRef = useRef<HTMLDivElement>(null)
     const addTicketRef = useRef<HTMLButtonElement>(null)
+    const { openConnectModal } = useConnectModal()
 
     const { address, isConnected } = useAccount()
     const { gameId, gameState } = useCurrentGame(contractAddress)
@@ -521,7 +523,11 @@ export function TicketPurchase({
                         ) : (
                             <div className="flex items-center justify-between gap-6">
                                 <p>Connect wallet to purchase tickets.</p>
-                                <Button size="sm" type="button" onClick={() => open()}>
+                                <Button
+                                    size="sm"
+                                    type="button"
+                                    onClick={() => openConnectModal?.()}
+                                >
                                     Connect wallet
                                 </Button>
                             </div>
