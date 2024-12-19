@@ -72,10 +72,28 @@ const config = {
                     from: { height: 'var(--radix-accordion-content-height)' },
                     to: { height: '0' },
                 },
+                wiggle: {
+                    '0%': {
+                        transform: 'translateX(-2px)',
+                    },
+                    '5%': {
+                        transform: 'translateX(2px)',
+                    },
+                    '10%': {
+                        transform: 'translateX(-2px)',
+                    },
+                    '15%': {
+                        transform: 'translateX(2px)',
+                    },
+                    '20%, 100%': {
+                        transform: 'translateX(0px)',
+                    },
+                },
             },
             animation: {
                 'accordion-down': 'accordion-down 0.2s ease-out',
                 'accordion-up': 'accordion-up 0.2s ease-out',
+                wiggle: 'wiggle 1s step-end infinite',
             },
         },
     },

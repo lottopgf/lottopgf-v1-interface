@@ -1,18 +1,39 @@
+import Countdown from 'react-countdown'
+
+const END_DATE = new Date(1735223442 * 1000)
+
 export function JuiceboxCampaignBanner() {
     return (
         <div className="flex items-center justify-center gap-4 bg-otto/90 px-4 py-2 text-sm text-white md:text-base">
             <div className="flex items-center gap-1">
-                <span className="tracking-wide">
-                    Our Juicebox Community Fundraise campaign is live - Get $OTTO, join OttoDAO
-                </span>
+                <div className="flex flex-col items-center tracking-wide">
+                    <div>
+                        Our Juicebox Community Fundraise campaign is live - Get $OTTO, join OttoDAO
+                    </div>{' '}
+                    <Countdown
+                        date={END_DATE}
+                        renderer={(props) => {
+                            return (
+                                <span className="animate-wiggle">
+                                    Only{' '}
+                                    <strong>
+                                        {props.days}d {props.hours}h {props.minutes}m{' '}
+                                        {props.seconds}s
+                                    </strong>{' '}
+                                    left!
+                                </span>
+                            )
+                        }}
+                    />
+                </div>
                 <img
                     alt=""
                     loading="lazy"
-                    width="24"
-                    height="24"
+                    width="32"
+                    height="32"
                     decoding="async"
                     data-nimg="1"
-                    className="inline-block align-middle"
+                    className="inline-block align-middle mx-2"
                     style={{
                         color: 'transparent',
                     }}
