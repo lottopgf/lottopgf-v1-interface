@@ -90,6 +90,8 @@ export function Deploy() {
         },
     })
 
+    const [didAgreeToTerms, setDidAgreeToTerms] = useState(false)
+
     const { symbol: prizeTokenSymbol, decimals: prizeTokenDecimals } = useERC20(
         form.watch('prizeTokenAddress'),
     )
@@ -756,11 +758,37 @@ export function Deploy() {
                         <h1 className="text-4xl font-normal mt-16">Let's fund public goods 🫡</h1>
                     </div>
 
+                    <div className="items-top flex space-x-2 mt-8">
+                        <Checkbox
+                            id="terms"
+                            checked={didAgreeToTerms}
+                            onCheckedChange={(checked) => setDidAgreeToTerms(Boolean(checked))}
+                        />
+                        <div className="grid gap-1.5 leading-none">
+                            <label
+                                htmlFor="terms"
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                                I have read and understood the{' '}
+                                <a
+                                    className="underline decoration-dotted"
+                                    href="https://docs.lottopgf.org/about/legal-and-security"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    legal disclaimers
+                                </a>
+                                .
+                            </label>
+                        </div>
+                        <label htmlFor="terms"></label>
+                    </div>
+
                     <Button
                         type="submit"
                         className="my-8"
                         size="lg"
-                        disabled={createLooteryStatus === 'success'}
+                        disabled={createLooteryStatus === 'success' || !didAgreeToTerms}
                     >
                         {createLooteryStatus === 'pending' || uploadMetadataStatus === 'pending' ? (
                             <>
