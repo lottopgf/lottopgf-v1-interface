@@ -96,6 +96,11 @@ export const LOOTERY_DEPLOYMENT_HELPER_ABI = [
                 name: 'uri',
                 type: 'string',
             },
+            {
+                internalType: 'bool',
+                name: 'activateApocalypseMode',
+                type: 'bool',
+            },
         ],
         name: 'deployLooteryWithMetadata',
         outputs: [

@@ -57,6 +57,7 @@ export function useCreateLooteryWithMetadata() {
               seedJackpotMinValue: bigint,
               beneficiaries: FullBeneficiaryInfo[],
               metadata: Omit<LottoPGFMetadataV1, 'beneficiaries'>,
+              activateApocalypseMode: boolean,
           ) => {
               // Validate & upload metadata
               const validatedMetadata = LottoPGFMetadataV1Schema.parse({
@@ -101,6 +102,7 @@ export function useCreateLooteryWithMetadata() {
                           name,
                       })),
                       `ipfs://${cid}`,
+                      activateApocalypseMode,
                   ],
               })
           }

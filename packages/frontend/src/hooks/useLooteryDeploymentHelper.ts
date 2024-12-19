@@ -3,8 +3,8 @@ import { useReadContract } from 'wagmi'
 import { LOOTERY_DEPLOYMENT_HELPER_ABI } from '../abi/LooteryDeploymentHelper'
 
 const deploymentHelpers: Record<number, `0x${string}`> = {
-    [base.id]: '0x8D8A6E4Bea7d9dE3D65f4CFc0760D89ec2b1714A',
-    [scroll.id]: '0x171A53E7AB7da344845E706DDF7D0F67Eb1C9213',
+    [base.id]: '0x4A8D55012894a7DbaEFc5c5183Ea7b921bc4a3C1',
+    [scroll.id]: '0x4A8D55012894a7DbaEFc5c5183Ea7b921bc4a3C1',
 }
 
 export function useLooteryDeploymentHelper(chainId: number) {

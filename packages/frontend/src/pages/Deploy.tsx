@@ -26,6 +26,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { BeneficiaryInfoSchema, LottoPGFMetadataV1Schema } from '@common/metadata'
 import { viaIpfsGateway } from '@/lib/viaIpfsGateway'
+import { Checkbox } from '@/components/ui/checkbox'
 
 // Omit some stuff for the metadata form
 const { version, title, beneficiaries, ...MetadataFormSchema } = LottoPGFMetadataV1Schema.shape
@@ -45,6 +46,7 @@ const DeployFormSchema = z.object({
     ticketPrice: z.coerce.bigint(),
     seedJackpotDelay: z.coerce.bigint(),
     seedJackpotMinValue: z.coerce.bigint(),
+    activateApocalypseMode: z.boolean(),
     // Metadata-related fields
     ...MetadataFormSchema,
     // Beneficiaries
@@ -72,7 +74,7 @@ export function Deploy() {
             ticketPrice: 10n ** 18n,
             seedJackpotDelay: 600n,
             seedJackpotMinValue: 10n ** 18n,
-
+            activateApocalypseMode: false,
             // Metadata-related fields
             description: '',
             /** Not yet used: Long description of the lottery */
@@ -139,6 +141,7 @@ export function Deploy() {
                 logo: values.logo,
                 url: values.url,
             },
+            values.activateApocalypseMode,
         )
         form.reset()
     }
@@ -147,7 +150,7 @@ export function Deploy() {
     const chain = chains.find((c) => c.id === chainId)
 
     return (
-        <>
+        <div className="mb-16">
             <h1 className="text-4xl font-normal mt-16">
                 Launch a permissionless lottery to fund public goods
             </h1>
@@ -155,7 +158,7 @@ export function Deploy() {
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(launch)}>
                     {/* Lottery details */}
-                    <div className="flex flex-col space-y-4 mt-8">
+                    <div className="flex flex-col space-y-8 mt-16">
                         <h2 className="text-2xl">Lottery details</h2>
 
                         <div className="space-y-2">
@@ -303,7 +306,7 @@ export function Deploy() {
                     </div>
 
                     {/* Lottery settings */}
-                    <div className="flex flex-col space-y-4 mt-8">
+                    <div className="flex flex-col space-y-8 mt-16">
                         <h2 className="text-2xl">Lottery settings</h2>
 
                         <div className="space-y-2">
@@ -432,10 +435,38 @@ export function Deploy() {
                                 )}
                             />
                         </div>
+
+                        <div className="space-y-2">
+                            <FormField
+                                control={form.control}
+                                name="activateApocalypseMode"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md">
+                                        <FormControl>
+                                            <Checkbox
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                            />
+                                        </FormControl>
+                                        <div className="space-y-1 leading-none">
+                                            <FormLabel className="text-sm font-medium">
+                                                Activate apocalypse mode
+                                            </FormLabel>
+                                            <FormDescription>
+                                                If enabled, the lottery will only run for a single
+                                                game. If there are no winners, the jackpot is
+                                                divided evenly between all tickets. If disabled, the
+                                                lottery will run indefinitely.
+                                            </FormDescription>
+                                        </div>
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
                     </div>
 
                     {/* Ticket configuration */}
-                    <div className="flex flex-col space-y-4 mt-8">
+                    <div className="flex flex-col space-y-8 mt-16">
                         <h2 className="text-2xl">Ticket configuration</h2>
 
                         <div className="w-full flex justify-between items-center">
@@ -516,7 +547,7 @@ export function Deploy() {
                     </div>
 
                     {/* Beneficiaries */}
-                    <div className="flex flex-col space-y-4 mt-8">
+                    <div className="flex flex-col space-y-4 mt-16">
                         <h2 className="text-2xl">Add causes to fund with the lottery</h2>
 
                         <Card>
@@ -727,7 +758,7 @@ export function Deploy() {
 
                     <Button
                         type="submit"
-                        className="mt-4"
+                        className="my-8"
                         size="lg"
                         disabled={createLooteryStatus === 'success'}
                     >
@@ -760,6 +791,6 @@ export function Deploy() {
                     🙌
                 </p>
             )}
-        </>
+        </div>
     )
 }
