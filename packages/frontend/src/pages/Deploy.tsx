@@ -112,7 +112,6 @@ export function Deploy() {
         write: createLootery,
         status: createLooteryStatus,
         uploadMetadataStatus,
-        uploadMetadataError,
         looteryLaunchedEvent,
     } = useCreateLooteryWithMetadata()
 
