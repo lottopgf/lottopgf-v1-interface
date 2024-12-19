@@ -1,11 +1,12 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { useWinner } from '@/hooks/useWinner'
+import { Link } from '@tanstack/react-router'
 import { PartyPopperIcon } from 'lucide-react'
 import ConfettiExplosion from 'react-confetti-explosion'
 import { withErrorBoundary } from 'react-error-boundary'
 import { Address, isAddressEqual } from 'viem'
-import { useAccount } from 'wagmi'
+import { useAccount, useChainId } from 'wagmi'
 
 function WinnerAlertComponent({
     contractAddress,
@@ -14,6 +15,7 @@ function WinnerAlertComponent({
     contractAddress: Address
     gameId: bigint
 }) {
+    const chainId = useChainId()
     const { address } = useAccount()
     const { winningIds, winningAddresses, isOverWithApocalypse } = useWinner({
         contractAddress,
@@ -35,7 +37,16 @@ function WinnerAlertComponent({
                             </AlertDescription>
                         </div>
                         <Button asChild>
-                            <a href="/tickets">Check your tickets</a>
+                            <Link
+                                to="/tickets/$chainId/$address"
+                                params={{
+                                    chainId: chainId.toString(),
+                                    address: contractAddress,
+                                }}
+                                className="text-base text-green-500"
+                            >
+                                View your tickets &gt;
+                            </Link>
                         </Button>
                     </div>
                 </Alert>
@@ -70,7 +81,16 @@ function WinnerAlertComponent({
                         </AlertDescription>
                     </div>
                     <Button asChild>
-                        <a href="/tickets">Check your tickets</a>
+                        <Link
+                            to="/tickets/$chainId/$address"
+                            params={{
+                                chainId: chainId.toString(),
+                                address: contractAddress,
+                            }}
+                            className="text-base text-green-500"
+                        >
+                            View your tickets &gt;
+                        </Link>
                     </Button>
                 </div>
             </Alert>
