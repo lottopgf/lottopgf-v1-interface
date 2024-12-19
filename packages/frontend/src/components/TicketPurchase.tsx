@@ -299,7 +299,7 @@ export function TicketPurchase({
                                                     />
                                                 )}
                                             </span>{' '}
-                                            ETH raised
+                                            {prizeTokenSymbol} raised
                                         </p>
                                     </div>
 
