@@ -20,7 +20,7 @@ export const Route = createRootRoute({
                 <JuiceboxCampaignBanner />
                 <DynamicFavicon />
                 <Navbar />
-                <div className="flex flex-col space-y-8 w-full max-w-2xl mx-auto overflow-x-hidden">
+                <div className="flex flex-col space-y-8 w-full max-w-2xl mx-auto">
                     <div className="w-full">
                         <Outlet />
                     </div>
