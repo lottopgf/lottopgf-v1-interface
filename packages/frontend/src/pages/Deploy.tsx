@@ -67,7 +67,7 @@ export function Deploy() {
             title: '',
             symbol: '',
             duration: 3600,
-            communityFeeBps: 50,
+            communityFeeBps: 5000,
             prizeTokenAddress: '0x4200000000000000000000000000000000000006',
             pickLength: 5,
             maxBallValue: 25,
