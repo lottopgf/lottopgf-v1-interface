@@ -10,11 +10,11 @@ export function Navbar() {
 
     return (
         <div className="flex h-16 items-center justify-between px-4">
-            <div className="h-full flex flex-col justify-center">
+            <div className="h-full flex flex-col justify-center p-2">
                 {hasRouteMetadata ? (
-                    <img className="h-[60%]" src={logoUri} />
+                    <img className="h-[100%]" src={logoUri} />
                 ) : (
-                    <Logo className="h-[60%]" />
+                    <Logo className="h-[100%]" />
                 )}
             </div>
             <div className="flex items-center gap-4">
