@@ -1,9 +1,9 @@
 import { EthereumAddressSchema } from '@common/EthereumAddressSchema'
-import { Lottery } from '@/pages/Lottery'
+import { Admin } from '@/pages/Admin'
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
 
-export const Route = createFileRoute('/lottery/$chainId/$address')({
+export const Route = createFileRoute('/admin/$chainId/$address')({
     loader: ({ params }) => {
         return z
             .object({
@@ -19,5 +19,5 @@ export const Route = createFileRoute('/lottery/$chainId/$address')({
 
 function RouteComponent() {
     const { chainId, address } = Route.useLoaderData()
-    return <Lottery chainId={chainId} contractAddress={address} />
+    return <Admin chainId={chainId} contractAddress={address} />
 }

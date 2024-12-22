@@ -15,6 +15,7 @@ import { Route as DeployImport } from './routes/deploy'
 import { Route as IndexImport } from './routes/index'
 import { Route as TicketsChainIdAddressImport } from './routes/tickets.$chainId.$address'
 import { Route as LotteryChainIdAddressImport } from './routes/lottery.$chainId.$address'
+import { Route as AdminChainIdAddressImport } from './routes/admin.$chainId.$address'
 
 // Create/Update Routes
 
@@ -42,6 +43,12 @@ const LotteryChainIdAddressRoute = LotteryChainIdAddressImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+const AdminChainIdAddressRoute = AdminChainIdAddressImport.update({
+  id: '/admin/$chainId/$address',
+  path: '/admin/$chainId/$address',
+  getParentRoute: () => rootRoute,
+} as any)
+
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
@@ -58,6 +65,13 @@ declare module '@tanstack/react-router' {
       path: '/deploy'
       fullPath: '/deploy'
       preLoaderRoute: typeof DeployImport
+      parentRoute: typeof rootRoute
+    }
+    '/admin/$chainId/$address': {
+      id: '/admin/$chainId/$address'
+      path: '/admin/$chainId/$address'
+      fullPath: '/admin/$chainId/$address'
+      preLoaderRoute: typeof AdminChainIdAddressImport
       parentRoute: typeof rootRoute
     }
     '/lottery/$chainId/$address': {
@@ -82,6 +96,7 @@ declare module '@tanstack/react-router' {
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/deploy': typeof DeployRoute
+  '/admin/$chainId/$address': typeof AdminChainIdAddressRoute
   '/lottery/$chainId/$address': typeof LotteryChainIdAddressRoute
   '/tickets/$chainId/$address': typeof TicketsChainIdAddressRoute
 }
@@ -89,6 +104,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/deploy': typeof DeployRoute
+  '/admin/$chainId/$address': typeof AdminChainIdAddressRoute
   '/lottery/$chainId/$address': typeof LotteryChainIdAddressRoute
   '/tickets/$chainId/$address': typeof TicketsChainIdAddressRoute
 }
@@ -97,6 +113,7 @@ export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
   '/deploy': typeof DeployRoute
+  '/admin/$chainId/$address': typeof AdminChainIdAddressRoute
   '/lottery/$chainId/$address': typeof LotteryChainIdAddressRoute
   '/tickets/$chainId/$address': typeof TicketsChainIdAddressRoute
 }
@@ -106,18 +123,21 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/deploy'
+    | '/admin/$chainId/$address'
     | '/lottery/$chainId/$address'
     | '/tickets/$chainId/$address'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/deploy'
+    | '/admin/$chainId/$address'
     | '/lottery/$chainId/$address'
     | '/tickets/$chainId/$address'
   id:
     | '__root__'
     | '/'
     | '/deploy'
+    | '/admin/$chainId/$address'
     | '/lottery/$chainId/$address'
     | '/tickets/$chainId/$address'
   fileRoutesById: FileRoutesById
@@ -126,6 +146,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DeployRoute: typeof DeployRoute
+  AdminChainIdAddressRoute: typeof AdminChainIdAddressRoute
   LotteryChainIdAddressRoute: typeof LotteryChainIdAddressRoute
   TicketsChainIdAddressRoute: typeof TicketsChainIdAddressRoute
 }
@@ -133,6 +154,7 @@ export interface RootRouteChildren {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DeployRoute: DeployRoute,
+  AdminChainIdAddressRoute: AdminChainIdAddressRoute,
   LotteryChainIdAddressRoute: LotteryChainIdAddressRoute,
   TicketsChainIdAddressRoute: TicketsChainIdAddressRoute,
 }
@@ -149,6 +171,7 @@ export const routeTree = rootRoute
       "children": [
         "/",
         "/deploy",
+        "/admin/$chainId/$address",
         "/lottery/$chainId/$address",
         "/tickets/$chainId/$address"
       ]
@@ -158,6 +181,9 @@ export const routeTree = rootRoute
     },
     "/deploy": {
       "filePath": "deploy.tsx"
+    },
+    "/admin/$chainId/$address": {
+      "filePath": "admin.$chainId.$address.tsx"
     },
     "/lottery/$chainId/$address": {
       "filePath": "lottery.$chainId.$address.tsx"

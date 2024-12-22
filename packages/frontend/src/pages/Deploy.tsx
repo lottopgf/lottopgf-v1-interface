@@ -443,7 +443,11 @@ export function Deploy() {
                                             />
                                         </FormControl>
                                         <FormDescription>
-                                            Minimum value for manual jackpot seeding
+                                            Minimum value for manual jackpot seeding{' '}
+                                            {field.value &&
+                                                prizeTokenSymbol &&
+                                                prizeTokenDecimals &&
+                                                `(${formatUnits(field.value, prizeTokenDecimals)} ${prizeTokenSymbol})`}
                                         </FormDescription>
                                         <FormMessage />
                                     </FormItem>
