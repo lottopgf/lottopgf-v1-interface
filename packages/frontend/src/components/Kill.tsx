@@ -6,6 +6,7 @@ import { useSimulateContract } from 'wagmi'
 import { toast } from 'sonner'
 import { Button } from './ui/button'
 import { Loader2Icon } from 'lucide-react'
+import { useLootery } from '@/hooks/useLootery'
 
 export function Kill({ contractAddress }: { contractAddress: Address }) {
     const killConfig = {
@@ -13,6 +14,10 @@ export function Kill({ contractAddress }: { contractAddress: Address }) {
         address: contractAddress,
         functionName: 'kill',
     } as const
+
+    const {
+        data: { isConnectedAccountOwner },
+    } = useLootery(contractAddress)
 
     const { status: simulationSuccess } = useSimulateContract(killConfig)
 
@@ -40,7 +45,12 @@ export function Kill({ contractAddress }: { contractAddress: Address }) {
                 all tickets ever bought if there are no winners.
             </div>
             <Button
-                disabled={simulationSuccess !== 'success' || !kill || killStatus !== 'idle'}
+                disabled={
+                    simulationSuccess !== 'success' ||
+                    !kill ||
+                    killStatus !== 'idle' ||
+                    !isConnectedAccountOwner
+                }
                 onClick={kill}
             >
                 {(simulationSuccess === 'pending' || killStatus === 'pending') && (

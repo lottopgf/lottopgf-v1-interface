@@ -19,5 +19,5 @@ export const Route = createFileRoute('/lottery/$chainId/$address')({
 
 function RouteComponent() {
     const { chainId, address } = Route.useLoaderData()
-    return <Lottery chainId={chainId} address={address} />
+    return <Lottery chainId={chainId} contractAddress={address} />
 }

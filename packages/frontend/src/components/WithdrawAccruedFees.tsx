@@ -6,10 +6,14 @@ import { Address, formatUnits } from 'viem'
 import { useReadContract, useWatchContractEvent, useWriteContract } from 'wagmi'
 import { toast } from 'sonner'
 import { Loader2Icon } from 'lucide-react'
+import { useLootery } from '@/hooks/useLootery'
 
 export function WithdrawAccruedFees({ contractAddress }: { contractAddress: Address }) {
     const { prizeToken } = useGameConfig(contractAddress)
     const { decimals, symbol } = useERC20(prizeToken)
+    const {
+        data: { isConnectedAccountOwner },
+    } = useLootery(contractAddress)
 
     const { data: accruedFees } = useReadContract({
         abi: LOOTERY_ABI,
@@ -47,7 +51,11 @@ export function WithdrawAccruedFees({ contractAddress }: { contractAddress: Addr
                 </div>
             </div>
             <Button
-                disabled={!withdrawAccruedFees || withdrawAccruedFeesStatus !== 'idle'}
+                disabled={
+                    !withdrawAccruedFees ||
+                    withdrawAccruedFeesStatus !== 'idle' ||
+                    !isConnectedAccountOwner
+                }
                 onClick={withdrawAccruedFees}
             >
                 {withdrawAccruedFeesStatus === 'pending' && (

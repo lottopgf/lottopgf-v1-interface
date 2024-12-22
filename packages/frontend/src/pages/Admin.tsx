@@ -5,7 +5,7 @@ import { SeedJackpot } from '@/components/SeedJackpot'
 import { Kill } from '@/components/Kill'
 import { WithdrawAccruedFees } from '@/components/WithdrawAccruedFees'
 
-export function Admin({ chainId, address }: { chainId: number; address: Address }) {
+export function Admin({ chainId, contractAddress }: { chainId: number; contractAddress: Address }) {
     const currentChainId = useChainId()
 
     if (currentChainId !== chainId) {
@@ -18,19 +18,19 @@ export function Admin({ chainId, address }: { chainId: number; address: Address 
             <div className="mt-16 space-y-4">
                 <h2 className="text-2xl">Seed jackpot</h2>
                 <ErrorBoundary fallbackRender={({ error }) => <div>{error.message}</div>}>
-                    <SeedJackpot contractAddress={address} />
+                    <SeedJackpot contractAddress={contractAddress} />
                 </ErrorBoundary>
             </div>
             <div className="mt-16 space-y-4">
                 <h2 className="text-2xl">Kill lottery/activate redistribution mode</h2>
                 <ErrorBoundary fallbackRender={({ error }) => <div>{error.message}</div>}>
-                    <Kill contractAddress={address} />
+                    <Kill contractAddress={contractAddress} />
                 </ErrorBoundary>
             </div>
             <div className="mt-16 space-y-4">
                 <h2 className="text-2xl">Withdraw accrued fees</h2>
                 <ErrorBoundary fallbackRender={({ error }) => <div>{error.message}</div>}>
-                    <WithdrawAccruedFees contractAddress={address} />
+                    <WithdrawAccruedFees contractAddress={contractAddress} />
                 </ErrorBoundary>
             </div>
         </div>

@@ -19,5 +19,5 @@ export const Route = createFileRoute('/admin/$chainId/$address')({
 
 function RouteComponent() {
     const { chainId, address } = Route.useLoaderData()
-    return <Admin chainId={chainId} address={address} />
+    return <Admin chainId={chainId} contractAddress={address} />
 }
