@@ -10,9 +10,17 @@ import { useGameConfig } from '@/hooks/useGameConfig'
 import { Loader2Icon } from 'lucide-react'
 import { useState } from 'react'
 import { Address, formatUnits } from 'viem'
-import { useAccount, useBalance, useChainId, useReadContracts, useWriteContract } from 'wagmi'
+import {
+    useAccount,
+    useBalance,
+    useChainId,
+    useReadContracts,
+    useWatchContractEvent,
+    useWriteContract,
+} from 'wagmi'
 import { formatDistance } from 'date-fns'
 import { ErrorBoundary } from 'react-error-boundary'
+import { toast } from 'sonner'
 
 function SeedJackpot({ contractAddress }: { contractAddress: Address }) {
     const chainId = useChainId()
@@ -87,6 +95,19 @@ function SeedJackpot({ contractAddress }: { contractAddress: Address }) {
             })
         }
     }
+
+    useWatchContractEvent({
+        address: contractAddress,
+        abi: LOOTERY_ABI,
+        eventName: 'JackpotSeeded',
+        onLogs: (logs) => {
+            if (logs.find((log) => log.eventName === 'JackpotSeeded')) {
+                toast.success(
+                    `Successfully seeded jackpot with ${formatUnits(amount, decimals ?? 0)} ${symbol}`,
+                )
+            }
+        },
+    })
 
     const { data: nativeBalance } = useBalance({
         address,
