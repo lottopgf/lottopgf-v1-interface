@@ -1,21 +1,22 @@
-import { useMatch } from '@tanstack/react-router'
+import { useParams } from '@tanstack/react-router'
 import { useLottoPGFMetadata } from '@/hooks/useLottoPGFMetadata'
+import { z } from 'zod'
+import { EthereumAddressSchema } from '@common/EthereumAddressSchema'
+
+const RouteMetadataParams = z.object({
+    chainId: z.string().regex(/^\d+$/),
+    address: EthereumAddressSchema,
+})
 
 export function useLotteryRouteMetadata() {
-    const lotteryRouteMatch = useMatch({
-        from: '/lottery/$chainId/$address',
-        shouldThrow: false,
+    const _params = useParams({
+        strict: false,
     })
-    const ticketsRouteMatch = useMatch({
-        from: '/tickets/$chainId/$address',
-        shouldThrow: false,
-    })
-    const hasRouteMetadata = Boolean(lotteryRouteMatch || ticketsRouteMatch)
-    const params = lotteryRouteMatch?.params || ticketsRouteMatch?.params
+    const { success: hasRouteMetadata, data: params } = RouteMetadataParams.safeParse(_params)
 
     const { metadata } = useLottoPGFMetadata(
-        params?.chainId ? Number(params?.chainId) : undefined,
-        params?.address as `0x${string}` | undefined,
+        hasRouteMetadata ? Number(params.chainId) : undefined,
+        params?.address,
     )
 
     return {
