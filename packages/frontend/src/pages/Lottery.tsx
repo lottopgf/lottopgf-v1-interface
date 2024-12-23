@@ -39,6 +39,35 @@ export function Lottery({ chainId, contractAddress }: LotteryProps) {
         return <div>Switch to {chainId} to view this lottery</div>
     }
 
+    const operatorFunctionsCard = isConnectedAccountOwner && (
+        <Alert className="bg-yellow-500 text-black">
+            <AlertCircleIcon className="h-4 w-4 stroke-black" />
+            <div />
+            <div className="flex items-center justify-between gap-6">
+                <div className="flex-1">
+                    <AlertTitle>Looking for operator functions?</AlertTitle>
+                    <AlertDescription className="space-y-2">
+                        Navigate to the operator functions page to seed the jackpot, end the game,
+                        withdraw fees or perform other operator functions.
+                    </AlertDescription>
+                </div>
+                <div>
+                    <Link
+                        to="/admin/$chainId/$address"
+                        params={{
+                            chainId: chainId.toString(),
+                            address: contractAddress,
+                        }}
+                    >
+                        <Button>
+                            Operator <ChevronRight />
+                        </Button>
+                    </Link>
+                </div>
+            </div>
+        </Alert>
+    )
+
     if (!isActive) {
         return (
             <div className="mb-4 space-y-14">
@@ -48,6 +77,7 @@ export function Lottery({ chainId, contractAddress }: LotteryProps) {
                         longDescription={metadata?.description}
                         bannerImage={metadata?.bannerImage}
                     />
+                    {operatorFunctionsCard}
                     <LotteryInactive address={contractAddress} />
                 </div>
             </div>
@@ -63,34 +93,7 @@ export function Lottery({ chainId, contractAddress }: LotteryProps) {
                     bannerImage={metadata?.bannerImage}
                 />
 
-                {isConnectedAccountOwner && (
-                    <Alert className="bg-yellow-500 text-black">
-                        <AlertCircleIcon className="h-4 w-4 stroke-black" />
-                        <div />
-                        <div className="flex items-center justify-between gap-6">
-                            <div className="flex-1">
-                                <AlertTitle>Looking for operator functions?</AlertTitle>
-                                <AlertDescription className="space-y-2">
-                                    Navigate to the operator functions page to seed the jackpot, end
-                                    the game, withdraw fees or perform other operator functions.
-                                </AlertDescription>
-                            </div>
-                            <div>
-                                <Link
-                                    to="/admin/$chainId/$address"
-                                    params={{
-                                        chainId: chainId.toString(),
-                                        address: contractAddress,
-                                    }}
-                                >
-                                    <Button>
-                                        Operator <ChevronRight />
-                                    </Button>
-                                </Link>
-                            </div>
-                        </div>
-                    </Alert>
-                )}
+                {operatorFunctionsCard}
 
                 {roundHasEnded && (
                     <RoundEndAlert

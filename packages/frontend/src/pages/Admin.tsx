@@ -7,9 +7,13 @@ import { WithdrawAccruedFees } from '@/components/WithdrawAccruedFees'
 import { useLootery } from '@/hooks/useLootery'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { AlertTriangleIcon } from 'lucide-react'
+import { useLottoPGFMetadata } from '@/hooks/useLottoPGFMetadata'
 
 export function Admin({ chainId, contractAddress }: { chainId: number; contractAddress: Address }) {
     const currentChainId = useChainId()
+    const {
+        metadata: { title },
+    } = useLottoPGFMetadata(chainId, contractAddress)
     const {
         data: { isConnectedAccountOwner },
     } = useLootery(contractAddress)
@@ -20,7 +24,10 @@ export function Admin({ chainId, contractAddress }: { chainId: number; contractA
 
     return (
         <div className="mb-4 space-y-14">
-            <h1 className="text-4xl font-normal mt-16">Operator Functions</h1>
+            <div>
+                <h1 className="text-4xl font-extrabold lg:text-5xl mt-16">{title}</h1>
+                <div className="text-2xl font-normal mt-2">Operator Functions</div>
+            </div>
 
             {!isConnectedAccountOwner && (
                 <Alert className="bg-red-500 text-white">
